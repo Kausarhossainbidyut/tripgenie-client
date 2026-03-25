@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { dashboardService } from '../../services/dashboard.service';
 import { userService } from '../../services/user.service';
-import { EditUserModal } from '../../components/ui/EditUserModal';
 import type { DashboardStats, DashboardChartData, User } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -180,7 +179,7 @@ export function AdminDashboard() {
 
       {/* Content Sections */}
       {activeMenu === 'overview' && <OverviewSection stats={stats} chartData={chartData} />}
-      {activeMenu === 'users' && <UsersSection users={users} />}
+      {activeMenu === 'users' && <UsersSection users={users} user={user} onRefresh={fetchUsers} />}
       {activeMenu === 'bookings' && <BookingsSection />}
       {activeMenu === 'items' && <ItemsSection />}
       {activeMenu === 'revenue' && <RevenueSection stats={stats} chartData={chartData} />}
@@ -240,30 +239,39 @@ function OverviewSection({ stats, chartData }: { stats: DashboardStats | null; c
   );
 }
 
-function UsersSection({ users }: { users: User[] }) {
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+function UsersSection({ users, user, onRefresh }: { users: User[]; user: User | null; onRefresh: () => void }) {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<string | null>(null);
-  const [updateLoading, setUpdateLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const handleUpdateUser = async (userId: string, updateData: Partial<User>) => {
+  const handleRoleChange = async (userId: string, newRole: 'user' | 'admin') => {
+    // Prevent admin from changing their own role
+    if (userId === user?._id) {
+      alert('You cannot change your own role. Please ask another admin to do this.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
+      return;
+    }
+
+    console.log('Changing role for user:', userId, 'to:', newRole);
+    
     try {
-      setUpdateLoading(true);
-      const response = await userService.updateUser(userId, updateData);
+      setDeleteLoading(true);
+      const response = await userService.updateUser(userId, { role: newRole });
+      console.log('Response:', response);
+      
       if (response.success) {
-        alert('User updated successfully');
-        setEditingUser(null);
-        // Refresh user list
-        const refreshResponse = await userService.getAllUsers();
-        if (refreshResponse.success) {
-          // Update local state
-        }
-        window.location.reload();
+        alert(`User role changed to ${newRole} successfully!`);
+        onRefresh();
+      } else {
+        alert(response.message || 'Failed to update user role');
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update user');
+      console.error('Role change error:', err);
+      alert(err.response?.data?.message || err.message || 'Failed to update user role');
     } finally {
-      setUpdateLoading(false);
+      setDeleteLoading(false);
     }
   };
 
@@ -320,37 +328,36 @@ function UsersSection({ users }: { users: User[] }) {
                     </td>
                     <td style={{ padding: '0.75rem', color: '#6b7280' }}>{user.email}</td>
                     <td style={{ padding: '0.75rem' }}>
-                      <span style={{ 
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        backgroundColor: user.role === 'admin' ? '#dbeafe' : '#e5e7eb',
-                        color: user.role === 'admin' ? '#1e40af' : '#374151',
-                      }}>
-                        {user.role || 'user'}
-                      </span>
+                      <select
+                        value={user.role === 'admin' ? 'admin' : 'user'}
+                        onChange={(e) => handleRoleChange(user._id!, e.target.value as 'user' | 'admin')}
+                        disabled={deleteLoading}
+                        style={{
+                          padding: '0.375rem 0.5rem',
+                          borderRadius: '0.375rem',
+                          border: '1px solid #d1d5db',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          backgroundColor: user.role === 'admin' ? '#dbeafe' : '#f3f4f6',
+                          color: user.role === 'admin' ? '#1e40af' : '#374151',
+                          cursor: deleteLoading ? 'not-allowed' : 'pointer',
+                          outline: 'none',
+                        }}
+                      >
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                      </select>
                     </td>
                     <td style={{ padding: '0.75rem' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => setEditingUser(user)}
-                          disabled={updateLoading}
-                        >
-                          {updateLoading ? '...' : 'Edit'}
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => setIsDeleteConfirmOpen(user._id)}
-                          disabled={deleteLoading}
-                          style={{ color: '#dc2626', borderColor: '#dc2626' }}
-                        >
-                          {deleteLoading ? '...' : 'Delete'}
-                        </Button>
-                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setIsDeleteConfirmOpen(user._id)}
+                        disabled={deleteLoading}
+                        style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                      >
+                        {deleteLoading ? '...' : 'Delete'}
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -359,16 +366,6 @@ function UsersSection({ users }: { users: User[] }) {
           </div>
         )}
       </div>
-
-      {/* Edit User Modal */}
-      {editingUser && (
-        <EditUserModal
-          user={editingUser}
-          onClose={() => setEditingUser(null)}
-          onSave={handleUpdateUser}
-          loading={updateLoading}
-        />
-      )}
 
       {/* Delete Confirmation Modal */}
       {isDeleteConfirmOpen && (
