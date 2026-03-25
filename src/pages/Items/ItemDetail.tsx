@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { itemService } from '../../services/item.service';
 import { bookingService } from '../../services/booking.service';
 import { wishlistService } from '../../services/wishlist.service';
@@ -18,6 +19,8 @@ export function ItemDetail() {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
 
   useEffect(() => {
     if (itemId) {
@@ -121,6 +124,39 @@ export function ItemDetail() {
     }
   };
 
+  const handleUpdateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setUpdateLoading(true);
+      const response = await itemService.updateItem(itemId!, item);
+      if (response.success) {
+        alert('Item updated successfully!');
+        setEditMode(false);
+        fetchItem();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update item');
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  const handleDeleteItem = async () => {
+    if (!confirm('Are you sure you want to delete this destination? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      const response = await itemService.deleteItem(itemId!);
+      if (response.success) {
+        alert('Item deleted successfully!');
+        navigate('/items');
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete item');
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
@@ -159,6 +195,32 @@ export function ItemDetail() {
       >
         ← Back to Destinations
       </Button>
+
+      {/* Admin/Edit Controls */}
+      {user && (
+        <div style={{ 
+          display: 'flex', 
+          gap: '0.5rem', 
+          justifyContent: 'flex-end',
+          marginBottom: '1rem'
+        }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/items')}
+          >
+            Edit Destination (Go to List)
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDeleteItem}
+            style={{ color: '#ef4444', borderColor: '#ef4444' }}
+          >
+            Delete Destination
+          </Button>
+        </div>
+      )}
 
       <div style={{ 
         display: 'grid', 

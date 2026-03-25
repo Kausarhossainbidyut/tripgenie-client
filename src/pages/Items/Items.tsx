@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { itemService } from '../../services/item.service';
+import { EditItemModal } from '../../components/ui/EditItemModal';
 import type { Item, ItemFilters } from '../../types';
 
 export function Items() {
@@ -21,6 +22,8 @@ export function Items() {
   });
   const [pagination, setPagination] = useState<{ page: number; limit: number; total: number; totalPages: number } | undefined>();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [updateLoading, setUpdateLoading] = useState(false);
   const [newItem, setNewItem] = useState<Partial<Item>>({
     title: '',
     description: '',
@@ -73,6 +76,22 @@ export function Items() {
       }
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to create item');
+    }
+  };
+
+  const handleUpdateItem = async (itemId: string, updateData: Partial<Item>) => {
+    try {
+      setUpdateLoading(true);
+      const response = await itemService.updateItem(itemId, updateData);
+      if (response.success) {
+        alert('Item updated successfully!');
+        setEditingItem(null);
+        fetchItems();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update item');
+    } finally {
+      setUpdateLoading(false);
     }
   };
 
@@ -308,23 +327,30 @@ export function Items() {
                     <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>
                       ৳{item.price}
                     </span>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/items/${item._id}`)}
-                      >
-                        View Details
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteItem(item._id!)}
-                        style={{ color: '#ef4444', borderColor: '#ef4444' }}
-                      >
-                        Delete
-                      </Button>
-                    </div>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingItem(item)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/items/${item._id}`)}
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteItem(item._id!)}
+                          style={{ color: '#ef4444', borderColor: '#ef4444' }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                   </div>
                 </div>
               </div>
@@ -356,6 +382,16 @@ export function Items() {
             </div>
           )}
         </>
+      )}
+
+      {/* Edit Item Modal */}
+      {editingItem && (
+        <EditItemModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSave={handleUpdateItem}
+          loading={updateLoading}
+        />
       )}
     </div>
   );
