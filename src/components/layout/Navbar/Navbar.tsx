@@ -12,13 +12,25 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 border-b bg-white shadow-sm" style={{ borderColor: '#e5e7eb' }}>
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#3b82f6', textDecoration: 'none' }}>
-          {APP_NAME}
+          ✈️ {APP_NAME}
         </Link>
 
         {/* Desktop Menu */}
         <div className="desktop-menu" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {isAuthenticated ? (
             <>
+              <Link to="/items" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
+                Destinations
+              </Link>
+              <Link to="/ai-chat" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
+                🤖 AI Chat
+              </Link>
+              <Link to="/wishlist" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
+                Wishlist ❤️
+              </Link>
+              <Link to="/bookings" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
+                Bookings
+              </Link>
               <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>Hello, {user?.name}</span>
               <Link to="/dashboard">
                 <Button variant="ghost" size="sm">Dashboard</Button>
@@ -29,6 +41,12 @@ export function Navbar() {
             </>
           ) : (
             <>
+              <Link to="/items" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
+                Destinations
+              </Link>
+              <Link to="/ai-chat" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
+                🤖 AI Chat
+              </Link>
               <Link to="/login">
                 <Button variant="ghost" size="sm">Login</Button>
               </Link>
@@ -67,6 +85,18 @@ export function Navbar() {
           {isAuthenticated ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <span style={{ fontSize: '0.875rem', color: '#6b7280', padding: '0.5rem' }}>Hello, {user?.name}</span>
+              <Link to="/items" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#374151', padding: '0.5rem', fontWeight: 500 }}>
+                Destinations
+              </Link>
+              <Link to="/ai-chat" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#374151', padding: '0.5rem', fontWeight: 500 }}>
+                🤖 AI Chat
+              </Link>
+              <Link to="/wishlist" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#374151', padding: '0.5rem', fontWeight: 500 }}>
+                Wishlist ❤️
+              </Link>
+              <Link to="/bookings" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#374151', padding: '0.5rem', fontWeight: 500 }}>
+                Bookings
+              </Link>
               <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="ghost" size="sm" style={{ width: '100%' }}>Dashboard</Button>
               </Link>
@@ -76,6 +106,12 @@ export function Navbar() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <Link to="/items" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#374151', padding: '0.5rem', fontWeight: 500 }}>
+                Destinations
+              </Link>
+              <Link to="/ai-chat" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none', color: '#374151', padding: '0.5rem', fontWeight: 500 }}>
+                🤖 AI Chat
+              </Link>
               <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="ghost" size="sm" style={{ width: '100%' }}>Login</Button>
               </Link>

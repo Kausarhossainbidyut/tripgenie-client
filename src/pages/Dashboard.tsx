@@ -1,22 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/Button';
+import { dashboardService } from '../services/dashboard.service';
+import type { DashboardStats } from '../types';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      const response = await dashboardService.getStats();
+      if (response.success) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'users', label: 'Users', icon: '👥' },
-    { id: 'analytics', label: 'Analytics', icon: '📈' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
+    { id: 'items', label: 'Destinations', icon: '🌍' },
+    { id: 'bookings', label: 'Bookings', icon: '📅' },
+    { id: 'wishlist', label: 'Wishlist', icon: '❤️' },
   ];
 
   const handleMenuClick = (menuId: string) => {
     setActiveMenu(menuId);
     setSidebarOpen(false);
+    // Navigate to respective pages
+    if (menuId === 'items') window.location.href = '/items';
+    else if (menuId === 'bookings') window.location.href = '/bookings';
+    else if (menuId === 'wishlist') window.location.href = '/wishlist';
   };
 
   return (
@@ -112,10 +138,12 @@ export function Dashboard() {
 
       {/* Main Content */}
       <main style={{ flex: 1, padding: '1rem', backgroundColor: '#f9fafb' }} className="dashboard-main">
-        {activeMenu === 'dashboard' && <DashboardContent />}
-        {activeMenu === 'users' && <UsersContent />}
-        {activeMenu === 'analytics' && <AnalyticsContent />}
-        {activeMenu === 'settings' && <SettingsContent />}
+        {activeMenu === 'dashboard' && (
+          <DashboardContent stats={stats} loading={loading} />
+        )}
+        {activeMenu === 'items' && <ItemsContent />}
+        {activeMenu === 'bookings' && <BookingsContent />}
+        {activeMenu === 'wishlist' && <WishlistContent />}
       </main>
 
       <style>{`
@@ -150,7 +178,21 @@ export function Dashboard() {
   );
 }
 
-function DashboardContent() {
+function DashboardContent({ stats, loading }: { stats: DashboardStats | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+        <div className="animate-spin" style={{ 
+          width: '2rem', 
+          height: '2rem', 
+          borderRadius: '50%', 
+          border: '4px solid #3b82f6',
+          borderTopColor: 'transparent'
+        }} />
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1 style={{ 
@@ -159,32 +201,44 @@ function DashboardContent() {
         color: '#111827', 
         marginBottom: '1.5rem' 
       }}>
-        Dashboard
+        Dashboard Overview
       </h1>
 
-      <div style={{ 
-        display: 'grid', 
-        gap: '1rem', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-        marginBottom: '2rem' 
-      }}>
-        <StatCard title="Total Users" value="1,234" />
-        <StatCard title="Active Sessions" value="56" />
-        <StatCard title="Revenue" value="$12,345" />
-        <StatCard title="Growth" value="+23%" />
-      </div>
+      {stats ? (
+        <>
+          <div style={{ 
+            display: 'grid', 
+            gap: '1rem', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            marginBottom: '2rem' 
+          }}>
+            <StatCard title="Total Destinations" value={stats.totalItems.toString()} />
+            <StatCard title="Total Bookings" value={stats.totalBookings.toString()} />
+            <StatCard title="Pending Bookings" value={stats.pendingBookings.toString()} />
+            <StatCard title="Total Revenue" value={`৳${stats.totalRevenue}`} />
+          </div>
 
-      <div className="card" style={{ overflowX: 'auto' }}>
-        <h2 style={{ fontSize: 'clamp(1rem, 3vw, 1.125rem)', fontWeight: 600, marginBottom: '1rem', color: '#111827' }}>
-          Recent Activity
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <ActivityItem text="New user registered" time="2m ago" />
-          <ActivityItem text="Payment received" time="15m ago" />
-          <ActivityItem text="New order placed" time="1h ago" />
-          <ActivityItem text="User updated profile" time="3h ago" />
+          <div className="card" style={{ overflowX: 'auto' }}>
+            <h2 style={{ fontSize: 'clamp(1rem, 3vw, 1.125rem)', fontWeight: 600, marginBottom: '1rem', color: '#111827' }}>
+              Welcome to Your Dashboard!
+            </h2>
+            <p style={{ color: '#6b7280', marginBottom: '1rem' }}>
+              Manage your travel destinations, bookings, and wishlist all in one place. Use the sidebar menu to navigate between different sections.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <ActivityItem text="Explore amazing destinations" time="Always available" />
+              <ActivityItem text="Book your dream trips" time="Instant booking" />
+              <ActivityItem text="Save favorites to wishlist" time="Easy access" />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="card">
+          <p style={{ color: '#6b7280', textAlign: 'center' }}>
+            Loading dashboard data...
+          </p>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -242,6 +296,54 @@ function ActivityItem({ text, time }: { text: string; time: string }) {
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
       <span style={{ color: '#374151' }}>{text}</span>
       <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{time}</span>
+    </div>
+  );
+}
+
+function ItemsContent() {
+  return (
+    <div>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: '1.5rem' }}>
+        Destinations
+      </h1>
+      <div className="card">
+        <p style={{ color: '#6b7280' }}>Navigate to the Destinations page to manage all travel destinations.</p>
+        <Button onClick={() => window.location.href = '/items'} style={{ marginTop: '1rem' }}>
+          Go to Destinations
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function BookingsContent() {
+  return (
+    <div>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: '1.5rem' }}>
+        My Bookings
+      </h1>
+      <div className="card">
+        <p style={{ color: '#6b7280' }}>View and manage all your trip bookings.</p>
+        <Button onClick={() => window.location.href = '/bookings'} style={{ marginTop: '1rem' }}>
+          View Bookings
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function WishlistContent() {
+  return (
+    <div>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: '1.5rem' }}>
+        My Wishlist
+      </h1>
+      <div className="card">
+        <p style={{ color: '#6b7280' }}>Your saved favorite destinations are here.</p>
+        <Button onClick={() => window.location.href = '/wishlist'} style={{ marginTop: '1rem' }}>
+          View Wishlist
+        </Button>
+      </div>
     </div>
   );
 }

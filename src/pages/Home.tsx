@@ -11,7 +11,7 @@ export function Home() {
         marginBottom: '1rem', 
         color: '#111827' 
       }}>
-        Welcome to {APP_NAME}
+        Welcome to {APP_NAME} - Your AI Travel Companion
       </h1>
       <p style={{ 
         fontSize: 'clamp(1rem, 3vw, 1.125rem)', 
@@ -20,8 +20,8 @@ export function Home() {
         color: '#6b7280',
         padding: '0 1rem'
       }}>
-        A production-ready React starter template with TypeScript, Tailwind CSS, 
-        and React Router. Build modern web applications faster.
+        Discover amazing destinations, book your dream trips, and get AI-powered travel recommendations. 
+        Your perfect adventure starts here!
       </p>
       <div style={{ 
         display: 'flex', 
@@ -29,14 +29,18 @@ export function Home() {
         flexWrap: 'wrap',
         justifyContent: 'center'
       }}>
-        <Link to="/register">
-          <Button size="lg">Get Started</Button>
+        <Link to="/items">
+          <Button size="lg">Explore Destinations</Button>
         </Link>
-        <Link to="/login">
-          <Button variant="outline" size="lg">Sign In</Button>
+        <Link to="/ai-chat">
+          <Button variant="outline" size="lg">🤖 Ask AI Assistant</Button>
+        </Link>
+        <Link to="/register">
+          <Button variant="outline" size="lg">Get Started</Button>
         </Link>
       </div>
 
+      {/* Features Section */}
       <div style={{ 
         display: 'grid', 
         marginTop: '4rem', 
@@ -47,17 +51,67 @@ export function Home() {
         padding: '0 1rem'
       }}>
         <FeatureCard
-          title="TypeScript"
-          description="Type-safe code with excellent developer experience"
+          title="🌍 Explore Destinations"
+          description="Discover amazing places around Bangladesh and beyond. From beaches to mountains, find your perfect getaway."
         />
         <FeatureCard
-          title="Tailwind CSS"
-          description="Utility-first CSS framework for rapid UI development"
+          title="🤖 AI-Powered Recommendations"
+          description="Get personalized travel suggestions based on your preferences and budget with our AI assistant."
         />
         <FeatureCard
-          title="React Router"
-          description="Declarative routing for React applications"
+          title="❤️ Wishlist & Booking"
+          description="Save your favorite destinations and book them instantly. Manage all your trips in one place."
         />
+        <FeatureCard
+          title="⭐ Reviews & Ratings"
+          description="Read honest reviews from other travelers and make informed decisions about your trips."
+        />
+      </div>
+
+      {/* Popular Categories */}
+      <div style={{ marginTop: '4rem', width: '100%', maxWidth: '64rem', padding: '0 1rem' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: '1.5rem' }}>
+          Popular Categories
+        </h2>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: '1rem'
+        }}>
+          {['Beach', 'Mountain', 'Forest', 'Historical', 'City Tour', 'Adventure'].map((category) => (
+            <Link
+              key={category}
+              to={`/items?category=${encodeURIComponent(category.toLowerCase())}`}
+              style={{
+                padding: '1.5rem',
+                backgroundColor: '#f9fafb',
+                borderRadius: '0.75rem',
+                textAlign: 'center',
+                textDecoration: 'none',
+                transition: 'all 0.2s',
+                border: '1px solid #e5e7eb'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#eff6ff';
+                e.currentTarget.style.borderColor = '#3b82f6';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#f9fafb';
+                e.currentTarget.style.borderColor = '#e5e7eb';
+              }}
+            >
+              <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>
+                {category === 'Beach' && '🏖️'}
+                {category === 'Mountain' && '🏔️'}
+                {category === 'Forest' && '🌲'}
+                {category === 'Historical' && '🏛️'}
+                {category === 'City Tour' && '🏙️'}
+                {category === 'Adventure' && '🎒'}
+              </span>
+              <span style={{ fontWeight: 600, color: '#111827' }}>{category}</span>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ export function Login() {
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.email) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
     if (!formData.password) newErrors.password = 'Password is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -27,8 +28,8 @@ export function Login() {
     try {
       await login({ email: formData.email, password: formData.password });
       navigate('/dashboard');
-    } catch {
-      setErrors({ submit: 'Invalid credentials' });
+    } catch (error: any) {
+      setErrors({ submit: error.message || 'Invalid credentials' });
     } finally {
       setIsLoading(false);
     }
@@ -38,7 +39,7 @@ export function Login() {
     <div style={{ maxWidth: '28rem', margin: '0 auto', padding: '3rem 1rem' }}>
       <div className="card">
         <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.5rem)', fontWeight: 700, textAlign: 'center', marginBottom: '1.5rem', color: '#111827' }}>
-          Welcome Back
+          Welcome Back to TripGenie
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">

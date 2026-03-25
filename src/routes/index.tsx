@@ -1,6 +1,12 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Home, Login, Register, Dashboard } from '../pages';
+import { Items } from '../pages/Items/Items';
+import { ItemDetail } from '../pages/Items/ItemDetail';
+import { Reviews } from '../pages/Reviews/Reviews';
+import { Wishlist } from '../pages/Wishlist/Wishlist';
+import { Bookings } from '../pages/Bookings/Bookings';
+import { AIChat } from '../pages/AIChat/AIChat';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -28,6 +34,26 @@ export function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/items" element={<Items />} />
+      <Route path="/items/:itemId" element={<ItemDetail />} />
+      <Route path="/items/:itemId/reviews" element={<Reviews />} />
+      <Route
+        path="/wishlist"
+        element={
+          <PrivateRoute>
+            <Wishlist />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/bookings"
+        element={
+          <PrivateRoute>
+            <Bookings />
+          </PrivateRoute>
+        }
+      />
+      <Route path="/ai-chat" element={<AIChat />} />
       <Route
         path="/dashboard"
         element={

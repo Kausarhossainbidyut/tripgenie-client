@@ -15,6 +15,7 @@ export function Register() {
     const newErrors: Record<string, string> = {};
     if (!formData.name) newErrors.name = 'Name is required';
     if (!formData.email) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
     if (!formData.password) newErrors.password = 'Password is required';
     else if (formData.password.length < 6)
       newErrors.password = 'Password must be at least 6 characters';
@@ -29,9 +30,11 @@ export function Register() {
     setIsLoading(true);
     try {
       await register(formData);
-      navigate('/dashboard');
-    } catch {
-      setErrors({ submit: 'Registration failed' });
+      // After successful registration, redirect to login
+      alert('Registration successful! Please login with your credentials.');
+      navigate('/login');
+    } catch (error: any) {
+      setErrors({ submit: error.message || 'Registration failed' });
     } finally {
       setIsLoading(false);
     }
@@ -41,13 +44,13 @@ export function Register() {
     <div style={{ maxWidth: '28rem', margin: '0 auto', padding: '3rem 1rem' }}>
       <div className="card">
         <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.5rem)', fontWeight: 700, textAlign: 'center', marginBottom: '1.5rem', color: '#111827' }}>
-          Create Account
+          Create Your TripGenie Account
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Name"
-            placeholder="Enter your name"
+            placeholder="Enter your full name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             error={errors.name}
@@ -56,7 +59,7 @@ export function Register() {
           <Input
             label="Email"
             type="email"
-            placeholder="Enter your email"
+            placeholder="Enter your email address"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             error={errors.email}
@@ -65,7 +68,7 @@ export function Register() {
           <Input
             label="Password"
             type="password"
-            placeholder="Create a password"
+            placeholder="Create a strong password"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             error={errors.password}
