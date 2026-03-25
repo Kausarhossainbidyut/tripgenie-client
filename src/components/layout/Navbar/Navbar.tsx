@@ -33,7 +33,9 @@ export function Navbar() {
               </Link>
               <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>Hello, {user?.name}</span>
               <Link to="/dashboard">
-                <Button variant="ghost" size="sm">Dashboard</Button>
+                <Button variant="ghost" size="sm">
+                  {user?.role === 'admin' ? '🔐 Admin Panel' : 'Dashboard'}
+                </Button>
               </Link>
               <Button variant="outline" size="sm" onClick={logout}>
                 Logout
@@ -98,7 +100,9 @@ export function Navbar() {
                 Bookings
               </Link>
               <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="ghost" size="sm" style={{ width: '100%' }}>Dashboard</Button>
+                <Button variant="ghost" size="sm" style={{ width: '100%' }}>
+                  {user?.role === 'admin' ? '🔐 Admin Panel' : 'Dashboard'}
+                </Button>
               </Link>
               <Button variant="outline" size="sm" onClick={() => { logout(); setMobileMenuOpen(false); }} style={{ width: '100%' }}>
                 Logout
