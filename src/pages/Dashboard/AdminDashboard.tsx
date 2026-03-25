@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { dashboardService } from '../../services/dashboard.service';
 import { userService } from '../../services/user.service';
+import { EditUserModal } from '../../components/ui/EditUserModal';
 import type { DashboardStats, DashboardChartData, User } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -240,6 +241,52 @@ function OverviewSection({ stats, chartData }: { stats: DashboardStats | null; c
 }
 
 function UsersSection({ users }: { users: User[] }) {
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<string | null>(null);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleUpdateUser = async (userId: string, updateData: Partial<User>) => {
+    try {
+      setUpdateLoading(true);
+      const response = await userService.updateUser(userId, updateData);
+      if (response.success) {
+        alert('User updated successfully');
+        setEditingUser(null);
+        // Refresh user list
+        const refreshResponse = await userService.getAllUsers();
+        if (refreshResponse.success) {
+          // Update local state
+        }
+        window.location.reload();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update user');
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      setDeleteLoading(true);
+      const response = await userService.deleteUser(userId);
+      if (response.success) {
+        alert('User deleted successfully');
+        setIsDeleteConfirmOpen(null);
+        window.location.reload();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete user');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <div>
       <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827', marginBottom: '1rem' }}>
@@ -285,7 +332,25 @@ function UsersSection({ users }: { users: User[] }) {
                       </span>
                     </td>
                     <td style={{ padding: '0.75rem' }}>
-                      <Button size="sm" variant="outline">Edit</Button>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setEditingUser(user)}
+                          disabled={updateLoading}
+                        >
+                          {updateLoading ? '...' : 'Edit'}
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setIsDeleteConfirmOpen(user._id)}
+                          disabled={deleteLoading}
+                          style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                        >
+                          {deleteLoading ? '...' : 'Delete'}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -294,6 +359,63 @@ function UsersSection({ users }: { users: User[] }) {
           </div>
         )}
       </div>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <EditUserModal
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onSave={handleUpdateUser}
+          loading={updateLoading}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteConfirmOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '2rem',
+            borderRadius: '0.5rem',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', color: '#111827' }}>
+              Confirm Deletion
+            </h3>
+            <p style={{ color: '#6b7280', marginBottom: '1.5rem' }}>
+              Are you sure you want to delete this user? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsDeleteConfirmOpen(null)}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => handleDeleteUser(isDeleteConfirmOpen)}
+                disabled={deleteLoading}
+                style={{ backgroundColor: '#dc2626' }}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
