@@ -70,6 +70,20 @@ export function Login() {
           </Button>
         </form>
 
+        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+          <Link 
+            to="/forgot-password" 
+            style={{ 
+              color: '#3b82f6', 
+              textDecoration: 'none', 
+              fontSize: '0.875rem',
+              fontWeight: 500
+            }}
+          >
+            Forgot Password?
+          </Link>
+        </div>
+
         <p className="text-center text-sm mt-4" style={{ color: '#6b7280' }}>
           Don&apos;t have an account?{' '}
           <Link to="/register" style={{ color: '#3b82f6', textDecoration: 'none' }}>
