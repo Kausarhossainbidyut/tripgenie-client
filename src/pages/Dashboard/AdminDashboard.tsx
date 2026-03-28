@@ -7,7 +7,8 @@ import type { DashboardStats, DashboardChartData, User } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { AdminItemsManagement } from '../Admin/ItemsManagement';
 import { alert } from '../../utils/sweetAlert';
-import { FiUsers, FiCalendar, FiMapPin, FiDollarSign, FiBarChart2, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiUsers, FiCalendar, FiMapPin, FiDollarSign, FiBarChart2, FiEdit2, FiTrash2, FiTrendingUp, FiActivity, FiCheckCircle, FiClock, FiArrowUpRight, FiShield, FiGlobe } from 'react-icons/fi';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export function AdminDashboard() {
   useEffect(() => {
     // Check if user is admin
     if (user?.role !== 'admin') {
-      alert('Access denied. Admin only.');
+      alert.warning('Access denied', 'Admin only.');
       navigate('/dashboard');
       return;
     }
@@ -70,114 +71,261 @@ export function AdminDashboard() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-        <div className="animate-spin" style={{ 
-          width: '2rem', 
-          height: '2rem', 
-          borderRadius: '50%', 
-          border: '4px solid #3b82f6',
-          borderTopColor: 'transparent'
-        }} />
+      <div style={{ padding: '2rem', minHeight: 'calc(100vh - 100px)' }}>
+        {/* Dashboard Skeleton */}
+        <LoadingSkeleton height={120} className="mb-8" />
+        
+        {/* Stats Grid Skeleton */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+          gap: '1.5rem',
+          marginBottom: '2rem'
+        }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card" style={{ padding: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <LoadingSkeleton height={48} width={48} variant="circular" />
+                <LoadingSkeleton height={20} width={120} />
+              </div>
+              <LoadingSkeleton height={40} width={80} className="mb-2" />
+              <LoadingSkeleton height={16} width={100} />
+            </div>
+          ))}
+        </div>
+
+        {/* Menu Tabs Skeleton */}
+        <LoadingSkeleton height={60} className="mb-8" />
+        
+        {/* Content Skeleton */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="card">
+              <LoadingSkeleton height={24} width={160} className="mb-4" />
+              <LoadingSkeleton height={16} count={5} />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '1rem' }}>
-      {/* Header */}
+    <div style={{ 
+      minHeight: 'calc(100vh - 100px)',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%)',
+      padding: '2rem'
+    }}>
+      {/* Modern Header */}
       <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '1.5rem' 
+        maxWidth: '1400px',
+        margin: '0 auto',
+        marginBottom: '2rem'
       }}>
-        <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: '0.25rem' }}>
-            🔐 Admin Dashboard
-          </h1>
-          <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-            Manage your entire TripGenie platform
-          </p>
+        <div style={{ 
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: '1rem',
+          padding: '2rem',
+          boxShadow: '0 20px 60px rgba(102, 126, 234, 0.3)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Decorative circles */}
+          <div style={{
+            position: 'absolute',
+            top: '-2rem',
+            right: '-2rem',
+            width: '10rem',
+            height: '10rem',
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '50%'
+          }} />
+          <div style={{
+            position: 'absolute',
+            bottom: '-1rem',
+            left: '-1rem',
+            width: '6rem',
+            height: '6rem',
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '50%'
+          }} />
+          
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'flex-start',
+              flexWrap: 'wrap',
+              gap: '1rem'
+            }}>
+              <div>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.75rem',
+                  marginBottom: '0.75rem'
+                }}>
+                  <div style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    padding: '0.75rem',
+                    borderRadius: '0.75rem',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    <FiShield size={32} color="#ffffff" />
+                  </div>
+                  <div>
+                    <h1 style={{ 
+                      fontSize: 'clamp(1.5rem, 4vw, 2rem)', 
+                      fontWeight: 800, 
+                      color: '#ffffff',
+                      margin: 0,
+                      letterSpacing: '-0.02em'
+                    }}>
+                      Admin Dashboard
+                    </h1>
+                    <p style={{ 
+                      color: 'rgba(255,255,255,0.9)',
+                      fontSize: '0.95rem',
+                      margin: '0.25rem 0 0 0'
+                    }}>
+                      Welcome back, {user?.name || 'Admin'}! Manage your platform
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/dashboard')}
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  color: '#ffffff',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  backdropFilter: 'blur(10px)',
+                  fontWeight: 600,
+                  padding: '0.75rem 1.5rem',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)';
+                }}
+              >
+                👤 Switch to User View
+              </Button>
+            </div>
+          </div>
         </div>
-        <Button variant="outline" onClick={() => navigate('/dashboard')}>
-          Switch to User View
-        </Button>
       </div>
 
-      {/* Stats Grid */}
+      {/* Enhanced Stats Grid */}
       {stats && (
         <div style={{ 
+          maxWidth: '1400px',
+          margin: '0 auto',
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '1rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+          gap: '1.5rem',
           marginBottom: '2rem'
         }}>
-          <StatCard 
+          <ModernStatCard 
             title="Total Users" 
             value={stats.totalUsers.toString()} 
-            icon="👥"
-            color="#3b82f6"
+            icon={<FiUsers size={28} />}
+            gradient={['#667eea', '#764ba2']}
+            trend="+12% from last month"
           />
-          <StatCard 
+          <ModernStatCard 
             title="Total Destinations" 
             value={stats.totalItems.toString()} 
-            icon="🌍"
-            color="#10b981"
+            icon={<FiGlobe size={28} />}
+            gradient={['#f093fb', '#f5576c']}
+            trend="Active listings"
           />
-          <StatCard 
+          <ModernStatCard 
             title="Total Bookings" 
             value={stats.totalBookings.toString()} 
-            icon="📅"
-            color="#f59e0b"
+            icon={<FiCalendar size={28} />}
+            gradient={['#4facfe', '#00f2fe']}
+            trend="Lifetime bookings"
           />
-          <StatCard 
+          <ModernStatCard 
             title="Total Revenue" 
             value={`৳${stats.totalRevenue.toLocaleString()}`} 
-            icon="💰"
-            color="#8b5cf6"
+            icon={<FiDollarSign size={28} />}
+            gradient={['#43e97b', '#38f9d7']}
+            trend="Platform earnings"
           />
-          <StatCard 
+          <ModernStatCard 
             title="Pending Bookings" 
             value={stats.pendingBookings.toString()} 
-            icon="⏳"
-            color="#ef4444"
+            icon={<FiClock size={28} />}
+            gradient={['#fa709a', '#fee140']}
+            trend="Awaiting confirmation"
           />
-          <StatCard 
+          <ModernStatCard 
             title="Confirmed Bookings" 
             value={stats.confirmedBookings.toString()} 
-            icon="✅"
-            color="#059669"
+            icon={<FiCheckCircle size={28} />}
+            gradient={['#30cfd0', '#330867']}
+            trend="Completed successfully"
           />
         </div>
       )}
 
-      {/* Menu Tabs */}
+      {/* Modern Menu Tabs */}
       <div style={{ 
-        display: 'flex', 
-        gap: '0.5rem', 
-        marginBottom: '1.5rem',
-        borderBottom: '1px solid #e5e7eb',
-        paddingBottom: '0.5rem'
+        maxWidth: '1400px',
+        margin: '0 auto 2rem auto'
       }}>
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveMenu(item.id)}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: activeMenu === item.id ? '#eff6ff' : 'transparent',
-              border: 'none',
-              borderRadius: '0.5rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: activeMenu === item.id ? '#3b82f6' : '#6b7280',
-              transition: 'all 0.2s',
-            }}
-          >
-            {item.icon} {item.label}
-          </button>
-        ))}
+        <div style={{ 
+          display: 'flex', 
+          gap: '0.75rem', 
+          padding: '0.75rem',
+          background: 'rgba(255,255,255,0.5)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '1rem',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          overflowX: 'auto',
+          flexWrap: 'nowrap'
+        }}>
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveMenu(item.id)}
+              style={{
+                padding: '0.875rem 1.5rem',
+                backgroundColor: activeMenu === item.id ? 'white' : 'transparent',
+                border: 'none',
+                borderRadius: '0.75rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: activeMenu === item.id ? '#667eea' : '#6b7280',
+                transition: 'all 0.3s ease',
+                boxShadow: activeMenu === item.id ? '0 4px 15px rgba(102, 126, 234, 0.2)' : 'none',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+              onMouseEnter={(e) => {
+                if (activeMenu !== item.id) {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.3)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeMenu !== item.id) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
+            >
+              <span style={{ fontSize: '1.125rem' }}>{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Content Sections */}
@@ -356,15 +504,17 @@ function UsersSection({ users, user, onRefresh }: { users: User[]; user: User | 
                       </select>
                     </td>
                     <td style={{ padding: '0.75rem' }}>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => setIsDeleteConfirmOpen(user._id)}
-                        disabled={deleteLoading}
-                        style={{ color: '#dc2626', borderColor: '#dc2626' }}
-                      >
-                        {deleteLoading ? '...' : 'Delete'}
-                      </Button>
+                      {user._id && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setIsDeleteConfirmOpen(user._id)}
+                          disabled={deleteLoading}
+                          style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                        >
+                          {deleteLoading ? '...' : 'Delete'}
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -486,7 +636,115 @@ function RevenueSection({ stats, chartData }: { stats: DashboardStats | null; ch
   );
 }
 
-// Reusable Stat Card Component
+// Modern Stat Card Component with Gradient
+function ModernStatCard({ 
+  title, 
+  value, 
+  icon, 
+  gradient,
+  trend 
+}: { 
+  title: string; 
+  value: string; 
+  icon: React.ReactNode;
+  gradient: [string, string];
+  trend?: string;
+}) {
+  return (
+    <div className="card" style={{ 
+      background: `linear-gradient(135deg, ${gradient[0]} 0%, ${gradient[1]} 100%)`,
+      padding: '1.5rem',
+      borderRadius: '1rem',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+      position: 'relative',
+      overflow: 'hidden',
+      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+      cursor: 'default'
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = 'translateY(-5px)';
+      e.currentTarget.style.boxShadow = '0 15px 40px rgba(0,0,0,0.15)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.1)';
+    }}
+    >
+      {/* Background Pattern */}
+      <div style={{
+        position: 'absolute',
+        top: '-2rem',
+        right: '-2rem',
+        width: '8rem',
+        height: '8rem',
+        background: 'rgba(255,255,255,0.1)',
+        borderRadius: '50%',
+        pointerEvents: 'none'
+      }} />
+      
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          marginBottom: '1rem'
+        }}>
+          <div style={{
+            background: 'rgba(255,255,255,0.2)',
+            padding: '0.75rem',
+            borderRadius: '0.75rem',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {icon}
+          </div>
+          {trend && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              fontSize: '0.75rem',
+              color: 'rgba(255,255,255,0.9)',
+              background: 'rgba(255,255,255,0.15)',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '0.5rem',
+              backdropFilter: 'blur(10px)'
+            }}>
+              <FiTrendingUp size={12} />
+              <span>{trend}</span>
+            </div>
+          )}
+        </div>
+        
+        <h3 style={{ 
+          fontSize: '0.875rem', 
+          color: 'rgba(255,255,255,0.9)', 
+          marginBottom: '0.5rem',
+          fontWeight: 500,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em'
+        }}>
+          {title}
+        </h3>
+        
+        <p style={{ 
+          fontSize: '2rem', 
+          fontWeight: 800, 
+          color: '#ffffff',
+          margin: 0,
+          lineHeight: 1.2,
+          textShadow: '0 2px 10px rgba(0,0,0,0.2)'
+        }}>
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Legacy StatCard (kept for compatibility)
 function StatCard({ title, value, icon, color }: { title: string; value: string; icon: string; color: string }) {
   return (
     <div className="card" style={{ 
