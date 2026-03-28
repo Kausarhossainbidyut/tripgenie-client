@@ -259,6 +259,16 @@ function SimpleBookingRow({ booking, onStatusChange }: any) {
 
   const handleStatusSelect = (status: string) => {
     if (status === booking.status) return;
+    
+    // Check if booking is already cancelled by user
+    if (booking.status === 'cancelled') {
+      alert.warning(
+        'Cannot Change Cancelled Booking',
+        'This booking has been cancelled and cannot be modified.'
+      );
+      return;
+    }
+    
     setNewStatus(status);
     setShowConfirmModal(true);
   };
@@ -319,18 +329,19 @@ function SimpleBookingRow({ booking, onStatusChange }: any) {
           <select
             value={booking.status}
             onChange={(e) => handleStatusSelect(e.target.value)}
-            disabled={updating}
+            disabled={updating || booking.status === 'cancelled'}
             style={{
               padding: '0.375rem 0.75rem',
               borderRadius: '0.375rem',
-              border: '1px solid #d1d5db',
+              border: booking.status === 'cancelled' ? '2px dashed #9ca3af' : '1px solid #d1d5db',
               fontSize: '0.75rem',
               fontWeight: 600,
-              backgroundColor: statusColors.bg,
-              color: statusColors.text,
-              cursor: updating ? 'not-allowed' : 'pointer',
+              backgroundColor: booking.status === 'cancelled' ? '#f3f4f6' : statusColors.bg,
+              color: booking.status === 'cancelled' ? '#9ca3af' : statusColors.text,
+              cursor: (updating || booking.status === 'cancelled') ? 'not-allowed' : 'pointer',
               outline: 'none',
-              minWidth: '120px'
+              minWidth: '120px',
+              opacity: booking.status === 'cancelled' ? 0.6 : 1
             }}
           >
             <option value="pending">⏳ Pending</option>
