@@ -9,6 +9,7 @@ import type { Item, ItemFilters } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { alert } from '../../utils/sweetAlert';
 import { FiSearch, FiFilter, FiDollarSign, FiStar, FiMapPin, FiShoppingCart, FiEye, FiImage, FiHeart, FiClock, FiUsers, FiMessageSquare } from 'react-icons/fi';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 
 export function Items() {
   const navigate = useNavigate();
@@ -140,14 +141,60 @@ export function Items() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-        <div className="animate-spin" style={{ 
-          width: '2rem', 
-          height: '2rem', 
-          borderRadius: '50%', 
-          border: '4px solid #3b82f6',
-          borderTopColor: 'transparent'
-        }} />
+      <div style={{ padding: '1rem' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '1.5rem' 
+        }}>
+          <LoadingSkeleton height={36} width={200} />
+        </div>
+        
+        {/* Filters Skeleton */}
+        <div className="card" style={{ marginBottom: '2rem' }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            gap: '1rem' 
+          }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i}>
+                <LoadingSkeleton height={20} width={100} className="mb-2" />
+                <LoadingSkeleton height={40} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Items Grid Skeleton */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+          gap: '1.5rem'
+        }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card" style={{ padding: '0' }}>
+              <LoadingSkeleton height={200} />
+              <div style={{ padding: '1rem' }}>
+                <LoadingSkeleton height={24} count={2} className="mb-2" />
+                <LoadingSkeleton height={16} width="60%" className="mb-2" />
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  marginTop: '1rem'
+                }}>
+                  <LoadingSkeleton height={32} width={120} />
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <LoadingSkeleton height={36} width={36} />
+                    <LoadingSkeleton height={36} width={36} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

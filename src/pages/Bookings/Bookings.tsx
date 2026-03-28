@@ -7,6 +7,7 @@ import type { Booking, Item } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { alert } from '../../utils/sweetAlert';
 import { FiCalendar, FiMapPin, FiDollarSign, FiXCircle, FiCheckCircle, FiClock, FiPackage, FiUser, FiChevronRight } from 'react-icons/fi';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 
 export function Bookings() {
   const { user } = useAuth();
@@ -174,14 +175,67 @@ export function Bookings() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-        <div className="animate-spin" style={{ 
-          width: '2.5rem', 
-          height: '2.5rem', 
-          borderRadius: '50%', 
-          border: '4px solid #e5e7eb',
-          borderTopColor: '#3b82f6'
-        }} />
+      <div style={{ 
+        maxWidth: '1400px', 
+        margin: '0 auto', 
+        padding: '2rem',
+        minHeight: 'calc(100vh - 100px)'
+      }}>
+        {/* Header Skeleton */}
+        <LoadingSkeleton height={120} className="mb-8" />
+        
+        {/* Stats Cards Skeleton */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', 
+          gap: '1.5rem',
+          marginBottom: '2.5rem'
+        }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="card" style={{ padding: '1.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <LoadingSkeleton height={40} width={40} variant="circular" />
+                <LoadingSkeleton height={20} width={120} />
+              </div>
+              <LoadingSkeleton height={40} width={80} className="mb-2" />
+              <LoadingSkeleton height={16} width={100} />
+            </div>
+          ))}
+        </div>
+
+        {/* Filter Tabs Skeleton */}
+        <LoadingSkeleton height={50} className="mb-8" />
+
+        {/* Booking Cards Skeleton */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gap: '1.5rem'
+        }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="card" style={{ padding: '0' }}>
+              <LoadingSkeleton height={180} />
+              <div style={{ padding: '1.25rem' }}>
+                <LoadingSkeleton height={28} count={2} className="mb-2" />
+                <LoadingSkeleton height={20} width="60%" className="mb-2" />
+                <div style={{ 
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '0.875rem',
+                  marginBottom: '1.25rem'
+                }}>
+                  {Array.from({ length: 4 }).map((_, j) => (
+                    <div key={j}>
+                      <LoadingSkeleton height={14} width={60} className="mb-2" />
+                      <LoadingSkeleton height={24} width={80} />
+                    </div>
+                  ))}
+                </div>
+                <LoadingSkeleton height={40} count={2} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

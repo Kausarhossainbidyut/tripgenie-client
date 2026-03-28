@@ -9,6 +9,7 @@ import type { Review, Item } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { alert, loading } from '../../utils/sweetAlert';
 import { FiStar, FiTrash2, FiMessageSquare, FiSmile } from 'react-icons/fi';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 
 export function Reviews() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -122,14 +123,40 @@ export function Reviews() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-        <div className="animate-spin" style={{ 
-          width: '2rem', 
-          height: '2rem', 
-          borderRadius: '50%', 
-          border: '4px solid #3b82f6',
-          borderTopColor: 'transparent'
-        }} />
+      <div style={{ padding: '1rem', maxWidth: '800px', margin: '0 auto' }}>
+        {/* Header Skeleton */}
+        <LoadingSkeleton height={40} width={160} className="mb-4" />
+        
+        {/* Item Info Skeleton */}
+        <div className="card" style={{ marginBottom: '1.5rem' }}>
+          <LoadingSkeleton height={24} count={2} className="mb-2" />
+          <LoadingSkeleton height={16} width="60%" />
+        </div>
+
+        {/* AI Summary Skeleton */}
+        {aiSummary && (
+          <div className="card" style={{ marginBottom: '1.5rem' }}>
+            <LoadingSkeleton height={20} width={120} className="mb-2" />
+            <LoadingSkeleton height={16} count={3} />
+          </div>
+        )}
+
+        {/* Reviews List Skeleton */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="card" style={{ padding: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <LoadingSkeleton height={40} width={40} variant="circular" />
+                <div style={{ flex: 1 }}>
+                  <LoadingSkeleton height={18} width={120} className="mb-2" />
+                  <LoadingSkeleton height={14} width={80} />
+                </div>
+                <LoadingSkeleton height={36} width={80} />
+              </div>
+              <LoadingSkeleton height={16} count={3} />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

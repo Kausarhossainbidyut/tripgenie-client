@@ -5,6 +5,7 @@ import { wishlistService } from '../../services/wishlist.service';
 import type { WishlistItem, Item } from '../../types';
 import { alert } from '../../utils/sweetAlert';
 import { FiHeart, FiTrash2, FiMapPin, FiDollarSign } from 'react-icons/fi';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 
 export function Wishlist() {
   const navigate = useNavigate();
@@ -57,14 +58,46 @@ export function Wishlist() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-        <div className="animate-spin" style={{ 
-          width: '2rem', 
-          height: '2rem', 
-          borderRadius: '50%', 
-          border: '4px solid #3b82f6',
-          borderTopColor: 'transparent'
-        }} />
+      <div style={{ padding: '1rem' }}>
+        {/* Header Skeleton */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '0.5rem',
+          marginBottom: '1.5rem' 
+        }}>
+          <LoadingSkeleton height={28} width={28} variant="circular" />
+          <LoadingSkeleton height={36} width={200} />
+        </div>
+
+        {/* Wishlist Grid Skeleton */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+          gap: '1.5rem'
+        }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="card" style={{ padding: '0' }}>
+              <LoadingSkeleton height={200} />
+              <div style={{ padding: '1rem' }}>
+                <LoadingSkeleton height={24} count={2} className="mb-2" />
+                <LoadingSkeleton height={16} width="60%" className="mb-2" />
+                <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                  marginTop: '1rem'
+                }}>
+                  <LoadingSkeleton height={32} width={120} />
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <LoadingSkeleton height={40} width="60%" />
+                    <LoadingSkeleton height={40} width={40} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

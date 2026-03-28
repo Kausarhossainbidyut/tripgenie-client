@@ -1,28 +1,26 @@
-import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
+import './LoadingSkeleton.css';
 
 interface LoadingSkeletonProps {
   count?: number;
   height?: number | string;
   width?: number | string;
   className?: string;
+  variant?: 'text' | 'circular' | 'rectangular';
 }
 
-export function LoadingSkeleton({ count = 1, height = 20, width, className = '' }: LoadingSkeletonProps) {
-  return (
-    <div className={className}>
-      <Skeleton
-        count={count}
-        height={typeof height === 'string' ? height : undefined}
-        width={typeof width === 'string' ? width : undefined}
-        style={{
-          ...(typeof height === 'number' ? { height } : {}),
-          ...(typeof width === 'number' ? { width } : {}),
-        }}
-        duration={1.2}
-      />
-    </div>
-  );
+export function LoadingSkeleton({ count = 1, height = 20, width, className = '', variant = 'rectangular' }: LoadingSkeletonProps) {
+  const skeletons = Array.from({ length: count }, (_, i) => (
+    <div
+      key={i}
+      className={`skeleton ${variant} ${className}`}
+      style={{
+        height: typeof height === 'string' ? height : `${height}px`,
+        width: typeof width === 'string' ? width : width !== undefined ? `${width}px` : '100%',
+      }}
+    />
+  ));
+
+  return <>{skeletons}</>;
 }
 
 // Card skeleton for common loading patterns
