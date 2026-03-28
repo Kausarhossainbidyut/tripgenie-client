@@ -6,9 +6,11 @@ import { userService } from '../../services/user.service';
 import type { DashboardStats, DashboardChartData, User } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { AdminItemsManagement } from '../Admin/ItemsManagement';
+import { EnhancedBookingsSection } from './EnhancedBookingsSection';
 import { alert } from '../../utils/sweetAlert';
-import { FiUsers, FiCalendar, FiMapPin, FiDollarSign, FiBarChart2, FiEdit2, FiTrash2, FiTrendingUp, FiActivity, FiCheckCircle, FiClock, FiArrowUpRight, FiShield, FiGlobe } from 'react-icons/fi';
+import { FiUsers, FiCalendar, FiMapPin, FiDollarSign, FiBarChart2, FiEdit2, FiTrash2, FiTrendingUp, FiActivity, FiCheckCircle, FiClock, FiArrowUpRight, FiShield, FiGlobe, FiSearch, FiFilter, FiX, FiEye, FiPhone, FiMail, FiUser, FiChevronDown } from 'react-icons/fi';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
+import { bookingService } from '../../services/booking.service';
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -277,7 +279,9 @@ export function AdminDashboard() {
       {/* Modern Menu Tabs */}
       <div style={{ 
         maxWidth: '1400px',
-        margin: '0 auto 2rem auto'
+        marginLeft: 'auto',
+        marginRight: 'auto',
+        marginBottom: '2rem'
       }}>
         <div style={{ 
           display: 'flex', 
@@ -331,7 +335,7 @@ export function AdminDashboard() {
       {/* Content Sections */}
       {activeMenu === 'overview' && <OverviewSection stats={stats} chartData={chartData} />}
       {activeMenu === 'users' && <UsersSection users={users} user={user} onRefresh={fetchUsers} />}
-      {activeMenu === 'bookings' && <BookingsSection />}
+      {activeMenu === 'bookings' && <EnhancedBookingsSection />}
       {activeMenu === 'items' && <AdminItemsManagement />}
       {activeMenu === 'revenue' && <RevenueSection stats={stats} chartData={chartData} />}
     </div>
@@ -508,7 +512,7 @@ function UsersSection({ users, user, onRefresh }: { users: User[]; user: User | 
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => setIsDeleteConfirmOpen(user._id)}
+                          onClick={() => setIsDeleteConfirmOpen(user._id ?? null)}
                           disabled={deleteLoading}
                           style={{ color: '#dc2626', borderColor: '#dc2626' }}
                         >
@@ -575,15 +579,523 @@ function UsersSection({ users, user, onRefresh }: { users: User[]; user: User | 
 }
 
 function BookingsSection() {
-  return (
-    <div>
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827', marginBottom: '1rem' }}>
-        All Bookings Management
-      </h2>
-      <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
-        <p style={{ color: '#6b7280', marginBottom: '1rem' }}>Navigate to bookings page to manage all bookings</p>
-        <Button onClick={() => window.location.href = '/bookings'}>View All Bookings</Button>
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [filterStatus]);
+
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      const response = await bookingService.getAllBookings();
+      if (response.success) {
+        setBookings(response.data || []);
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch bookings:', error);
+      await alert.error('Error', error.message || 'Failed to fetch bookings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (bookingId: string, newStatus: 'pending' | 'confirmed' | 'cancelled') => {
+    const isConfirmed = await alert.confirm({
+      title: 'Confirm Status Change',
+      text: `Are you sure you want to mark this booking as ${newStatus}?`,
+      confirmButtonText: 'Yes, Update',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+      setUpdatingId(bookingId);
+      const response = await bookingService.updateBookingStatus(bookingId, newStatus);
+
+      if (response.success) {
+        await alert.success('Status Updated!', `Booking has been ${newStatus}`);
+        fetchBookings();
+      } else {
+        throw new Error(response.message || 'Failed to update booking');
+      }
+    } catch (err: any) {
+      await alert.error('Update Failed', err.message || 'Failed to update booking status');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleDeleteBooking = async (bookingId: string) => {
+    const isConfirmed = await alert.confirm({
+      title: 'Delete Booking',
+      text: 'Are you sure you want to delete this booking? This action cannot be undone.',
+      confirmButtonText: 'Yes, Delete',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!isConfirmed) return;
+
+    try {
+      setUpdatingId(bookingId);
+      const response = await bookingService.deleteBooking(bookingId);
+
+      if (response.success) {
+        await alert.success('Deleted!', 'Booking has been deleted successfully');
+        fetchBookings();
+      } else {
+        throw new Error(response.message || 'Failed to delete booking');
+      }
+    } catch (err: any) {
+      await alert.error('Delete Failed', err.message || 'Failed to delete booking');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return { bg: '#fef3c7', text: '#92400e', border: '#fbbf24' };
+      case 'confirmed': return { bg: '#d1fae5', text: '#065f46', border: '#34d399' };
+      case 'cancelled': return { bg: '#fee2e2', text: '#991b1b', border: '#f87171' };
+      default: return { bg: '#f3f4f6', text: '#374151', border: '#9ca3af' };
+    }
+  };
+
+  const filteredBookings = bookings.filter(booking => {
+    const matchesStatus = filterStatus === 'all' || booking.status === filterStatus;
+    const matchesSearch = searchQuery === '' || 
+      booking.userId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.itemId?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking._id?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+
+  if (loading) {
+    return (
+      <div style={{ padding: '1rem' }}>
+        <LoadingSkeleton height={60} className="mb-4" />
+        <LoadingSkeleton height={50} className="mb-4" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <LoadingSkeleton key={i} height={80} className="mb-2" />
+        ))}
       </div>
+    );
+  }
+
+  return (
+    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        borderRadius: '1rem',
+        padding: '2rem',
+        marginBottom: '2rem',
+        boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'white' }}>
+          <div style={{
+            background: 'rgba(255,255,255,0.2)',
+            padding: '1rem',
+            borderRadius: '1rem',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <FiCalendar size={32} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, color: 'white' }}>
+              Booking Management
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.9)', margin: '0.25rem 0 0 0', fontSize: '0.95rem' }}>
+              Manage and track all platform bookings ({filteredBookings.length} total)
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters & Search */}
+      <div className="card" style={{ 
+        marginBottom: '1.5rem',
+        padding: '1.5rem',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+      }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+          gap: '1rem' 
+        }}>
+          {/* Search Input */}
+          <div style={{ position: 'relative' }}>
+            <div style={{
+              position: 'absolute',
+              left: '1rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: '#9ca3af'
+            }}>
+              <FiSearch size={20} />
+            </div>
+            <input
+              type="text"
+              placeholder="Search by user, destination, or ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem 1rem 0.75rem 3rem',
+                borderRadius: '0.5rem',
+                border: '1px solid #d1d5db',
+                fontSize: '0.875rem',
+                outline: 'none',
+                transition: 'border-color 0.2s'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#667eea'}
+              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+            />
+          </div>
+
+          {/* Status Filter */}
+          <div style={{ position: 'relative' }}>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                paddingRight: '3rem',
+                borderRadius: '0.5rem',
+                border: '1px solid #d1d5db',
+                fontSize: '0.875rem',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="all">All Statuses</option>
+              <option value="pending">⏳ Pending</option>
+              <option value="confirmed">✅ Confirmed</option>
+              <option value="cancelled">❌ Cancelled</option>
+            </select>
+            <FiChevronDown 
+              size={20} 
+              style={{
+                position: 'absolute',
+                right: '1rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                pointerEvents: 'none',
+                color: '#6b7280'
+              }} 
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        <StatMiniCard 
+          title="Total Bookings" 
+          value={bookings.length.toString()}
+          icon={<FiCalendar size={24} />}
+          color={['#667eea', '#764ba2']}
+        />
+        <StatMiniCard 
+          title="Pending" 
+          value={bookings.filter(b => b.status === 'pending').length.toString()}
+          icon={<FiClock size={24} />}
+          color={['#fbbf24', '#f59e0b']}
+        />
+        <StatMiniCard 
+          title="Confirmed" 
+          value={bookings.filter(b => b.status === 'confirmed').length.toString()}
+          icon={<FiCheckCircle size={24} />}
+          color={['#34d399', '#10b981']}
+        />
+        <StatMiniCard 
+          title="Cancelled" 
+          value={bookings.filter(b => b.status === 'cancelled').length.toString()}
+          icon={<FiX size={24} />}
+          color={['#f87171', '#ef4444']}
+        />
+      </div>
+
+      {/* Bookings Table */}
+      <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
+        {filteredBookings.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem' }}>
+            <FiCalendar size={48} color="#9ca3af" style={{ marginBottom: '1rem' }} />
+            <p style={{ color: '#6b7280', fontSize: '1.125rem' }}>No bookings found</p>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ 
+                  backgroundColor: '#f9fafb',
+                  borderBottom: '2px solid #e5e7eb'
+                }}>
+                  <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Booking ID</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>User</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Destination</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Date</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Amount</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Status</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredBookings.map((booking, index) => {
+                  const statusColors = getStatusColor(booking.status);
+                  return (
+                    <tr 
+                      key={booking._id}
+                      style={{ 
+                        borderBottom: '1px solid #e5e7eb',
+                        backgroundColor: index % 2 === 0 ? 'white' : '#f9fafb',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#eff6ff'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'white' : '#f9fafb'}
+                    >
+                      <td style={{ padding: '1rem', fontSize: '0.875rem', fontFamily: 'monospace', color: '#6b7280' }}>
+                        #{booking._id?.slice(-6)}
+                      </td>
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          {booking.user?.avatar ? (
+                            <img 
+                              src={booking.user.avatar} 
+                              alt={booking.user.name}
+                              style={{ width: '32px', height: '32px', borderRadius: '50%' }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontSize: '0.875rem',
+                              fontWeight: 600
+                            }}>
+                              {booking.user?.name?.charAt(0) || 'U'}
+                            </div>
+                          )}
+                          <div>
+                            <div style={{ fontWeight: 600, color: '#111827', fontSize: '0.875rem' }}>
+                              {booking.user?.name || 'Unknown'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                              {booking.user?.email || 'N/A'}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{ fontWeight: 500, color: '#111827', fontSize: '0.875rem' }}>
+                          {booking.item?.title || 'N/A'}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#9ca3af', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <FiMapPin size={12} />
+                          {booking.item?.location || 'N/A'}
+                        </div>
+                      </td>
+                      <td style={{ padding: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                        {booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        }) : 'N/A'}
+                      </td>
+                      <td style={{ padding: '1rem', fontWeight: 600, color: '#10b981', fontSize: '0.875rem' }}>
+                        ৳{booking.totalPrice?.toLocaleString() || '0'}
+                      </td>
+                      <td style={{ padding: '1rem' }}>
+                        <span style={{
+                          padding: '0.375rem 0.75rem',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          backgroundColor: statusColors.bg,
+                          color: statusColors.text,
+                          border: `1px solid ${statusColors.border}`,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          textTransform: 'capitalize'
+                        }}>
+                          {booking.status === 'pending' && '⏳'}
+                          {booking.status === 'confirmed' && '✅'}
+                          {booking.status === 'cancelled' && '❌'}
+                          {booking.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <button
+                            onClick={() => {
+                              setSelectedBooking(booking);
+                              setShowDetailsModal(true);
+                            }}
+                            style={{
+                              padding: '0.5rem 0.75rem',
+                              backgroundColor: '#eff6ff',
+                              color: '#3b82f6',
+                              border: 'none',
+                              borderRadius: '0.375rem',
+                              cursor: 'pointer',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#dbeafe';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#eff6ff';
+                            }}
+                          >
+                            <FiEye size={14} /> View
+                          </button>
+                          
+                          {booking.status !== 'confirmed' && (
+                            <button
+                              onClick={() => handleStatusChange(booking._id, 'confirmed')}
+                              disabled={updatingId === booking._id}
+                              style={{
+                                padding: '0.5rem 0.75rem',
+                                backgroundColor: '#d1fae5',
+                                color: '#059669',
+                                border: 'none',
+                                borderRadius: '0.375rem',
+                                cursor: updatingId === booking._id ? 'not-allowed' : 'pointer',
+                                fontSize: '0.75rem',
+                                fontWeight: 500,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                opacity: updatingId === booking._id ? 0.5 : 1,
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (updatingId !== booking._id) {
+                                  e.currentTarget.style.backgroundColor = '#a7f3d0';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (updatingId !== booking._id) {
+                                  e.currentTarget.style.backgroundColor = '#d1fae5';
+                                }
+                              }}
+                            >
+                              <FiCheckCircle size={14} /> {updatingId === booking._id ? '...' : 'Confirm'}
+                            </button>
+                          )}
+
+                          {booking.status !== 'cancelled' && booking.status !== 'confirmed' && (
+                            <button
+                              onClick={() => handleStatusChange(booking._id, 'cancelled')}
+                              disabled={updatingId === booking._id}
+                              style={{
+                                padding: '0.5rem 0.75rem',
+                                backgroundColor: '#fee2e2',
+                                color: '#dc2626',
+                                border: 'none',
+                                borderRadius: '0.375rem',
+                                cursor: updatingId === booking._id ? 'not-allowed' : 'pointer',
+                                fontSize: '0.75rem',
+                                fontWeight: 500,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                opacity: updatingId === booking._id ? 0.5 : 1,
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (updatingId !== booking._id) {
+                                  e.currentTarget.style.backgroundColor = '#fecaca';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (updatingId !== booking._id) {
+                                  e.currentTarget.style.backgroundColor = '#fee2e2';
+                                }
+                              }}
+                            >
+                              <FiX size={14} /> Cancel
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => handleDeleteBooking(booking._id!)}
+                            disabled={updatingId === booking._id}
+                            style={{
+                              padding: '0.5rem 0.75rem',
+                              backgroundColor: '#fee2e2',
+                              color: '#dc2626',
+                              border: 'none',
+                              borderRadius: '0.375rem',
+                              cursor: updatingId === booking._id ? 'not-allowed' : 'pointer',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              opacity: updatingId === booking._id ? 0.5 : 1,
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (updatingId !== booking._id) {
+                                e.currentTarget.style.backgroundColor = '#fecaca';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (updatingId !== booking._id) {
+                                e.currentTarget.style.backgroundColor = '#fee2e2';
+                              }
+                            }}
+                          >
+                            <FiTrash2 size={14} /> {updatingId === booking._id ? '...' : 'Delete'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Booking Details Modal */}
+      {showDetailsModal && selectedBooking && (
+        <BookingDetailsModal 
+          booking={selectedBooking}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedBooking(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -739,6 +1251,286 @@ function ModernStatCard({
         }}>
           {value}
         </p>
+      </div>
+    </div>
+  );
+}
+
+// Mini Stat Card for Booking Stats
+function StatMiniCard({ 
+  title, 
+  value, 
+  icon, 
+  color 
+}: { 
+  title: string; 
+  value: string; 
+  icon: React.ReactNode;
+  color: [string, string];
+}) {
+  return (
+    <div className="card" style={{
+      background: `linear-gradient(135deg, ${color[0]} 0%, ${color[1]} 100%)`,
+      padding: '1.25rem',
+      borderRadius: '0.75rem',
+      boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1rem',
+      transition: 'transform 0.2s'
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = 'translateY(-2px)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = 'translateY(0)';
+    }}
+    >
+      <div style={{
+        background: 'rgba(255,255,255,0.2)',
+        padding: '0.75rem',
+        borderRadius: '0.5rem',
+        backdropFilter: 'blur(10px)',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        {icon}
+      </div>
+      <div>
+        <p style={{ 
+          fontSize: '0.75rem', 
+          color: 'rgba(255,255,255,0.9)', 
+          margin: 0,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em'
+        }}>
+          {title}
+        </p>
+        <p style={{ 
+          fontSize: '1.5rem', 
+          fontWeight: 700, 
+          color: 'white',
+          margin: 0,
+          lineHeight: 1
+        }}>
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Booking Details Modal Component
+function BookingDetailsModal({ booking, onClose }: { booking: any; onClose: () => void }) {
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '1rem'
+    }} onClick={onClose}>
+      <div 
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '1rem',
+          maxWidth: '600px',
+          width: '100%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          padding: '1.5rem',
+          borderRadius: '1rem 1rem 0 0',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'white', margin: 0 }}>
+            Booking Details
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '2rem',
+              height: '2rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              transition: 'background 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+            }}
+          >
+            <FiX size={20} />
+          </button>
+        </div>
+
+        {/* Modal Content */}
+        <div style={{ padding: '1.5rem' }}>
+          {/* Booking Info */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.25rem' }}>Booking ID</div>
+            <div style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: '#6b7280' }}>#{booking._id}</div>
+          </div>
+
+          {/* Status Badge */}
+          <div style={{
+            padding: '0.75rem 1rem',
+            borderRadius: '0.5rem',
+            backgroundColor: booking.status === 'pending' ? '#fef3c7' : 
+                           booking.status === 'confirmed' ? '#d1fae5' : '#fee2e2',
+            border: `1px solid ${booking.status === 'pending' ? '#fbbf24' : 
+                                   booking.status === 'confirmed' ? '#34d399' : '#f87171'}`,
+            marginBottom: '1.5rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontWeight: 600,
+            fontSize: '0.875rem',
+            textTransform: 'capitalize',
+            color: booking.status === 'pending' ? '#92400e' : 
+                   booking.status === 'confirmed' ? '#065f46' : '#991b1b'
+          }}>
+            {booking.status === 'pending' && '⏳'}
+            {booking.status === 'confirmed' && '✅'}
+            {booking.status === 'cancelled' && '❌'}
+            {booking.status}
+          </div>
+
+          {/* User Details */}
+          <div className="card" style={{ marginBottom: '1rem', padding: '1rem' }}>
+            <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#6b7280', marginBottom: '1rem', textTransform: 'uppercase' }}>
+              User Information
+            </h4>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
+              {booking.user?.avatar ? (
+                <img 
+                  src={booking.user.avatar} 
+                  alt={booking.user.name}
+                  style={{ width: '48px', height: '48px', borderRadius: '50%' }}
+                />
+              ) : (
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '1.25rem',
+                  fontWeight: 600
+                }}>
+                  {booking.user?.name?.charAt(0) || 'U'}
+                </div>
+              )}
+              <div>
+                <div style={{ fontWeight: 600, color: '#111827', fontSize: '1rem' }}>
+                  {booking.user?.name || 'Unknown'}
+                </div>
+                <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
+                  {booking.user?.email || 'N/A'}
+                </div>
+              </div>
+            </div>
+            {booking.user?.phone && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                <FiPhone size={16} />
+                {booking.user.phone}
+              </div>
+            )}
+            {booking.user?.email && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                <FiMail size={16} />
+                {booking.user.email}
+              </div>
+            )}
+          </div>
+
+          {/* Destination Details */}
+          <div className="card" style={{ marginBottom: '1rem', padding: '1rem' }}>
+            <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#6b7280', marginBottom: '1rem', textTransform: 'uppercase' }}>
+              Destination Details
+            </h4>
+            {booking.item?.image && (
+              <img 
+                src={booking.item.image} 
+                alt={booking.item.title}
+                style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '0.5rem', marginBottom: '1rem' }}
+              />
+            )}
+            <div style={{ fontWeight: 600, color: '#111827', fontSize: '1rem', marginBottom: '0.5rem' }}>
+              {booking.item?.title || 'N/A'}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.875rem', color: '#9ca3af', marginBottom: '0.5rem' }}>
+              <FiMapPin size={16} />
+              {booking.item?.location || 'N/A'}
+            </div>
+            <div style={{ fontWeight: 600, color: '#10b981', fontSize: '1.125rem' }}>
+              ৳{booking.totalPrice?.toLocaleString() || '0'}
+            </div>
+          </div>
+
+          {/* Booking Dates */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(2, 1fr)', 
+            gap: '1rem',
+            marginBottom: '1.5rem'
+          }}>
+            <div className="card" style={{ padding: '1rem' }}>
+              <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.25rem' }}>Booking Date</div>
+              <div style={{ fontWeight: 600, color: '#111827', fontSize: '0.875rem' }}>
+                {booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                }) : 'N/A'}
+              </div>
+            </div>
+            <div className="card" style={{ padding: '1rem' }}>
+              <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.25rem' }}>Created At</div>
+              <div style={{ fontWeight: 600, color: '#111827', fontSize: '0.875rem' }}>
+                {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                }) : 'N/A'}
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <Button onClick={onClose} variant="outline" style={{ flex: 1 }}>
+              Close
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
