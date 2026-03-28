@@ -8,7 +8,7 @@ import { wishlistService } from '../../services/wishlist.service';
 import type { Item } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { alert, loading } from '../../utils/sweetAlert';
-import { FiHeart, FiShoppingCart, FiEdit, FiTrash2, FiMapPin, FiDollarSign, FiStar, FiMessageSquare, FiEye } from 'react-icons/fi';
+import { FiHeart, FiShoppingCart, FiEdit, FiTrash2, FiMapPin, FiDollarSign, FiStar, FiMessageSquare, FiEye, FiChevronLeft, FiChevronRight, FiGrid, FiImage } from 'react-icons/fi';
 
 export function ItemDetail() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -23,6 +23,11 @@ export function ItemDetail() {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
+  
+  // Gallery states
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
   useEffect(() => {
     if (itemId) {
@@ -30,6 +35,19 @@ export function ItemDetail() {
       checkWishlist();
     }
   }, [itemId]);
+
+  // Initialize gallery when item loads
+  useEffect(() => {
+    if (item) {
+      // Set up gallery images - main image + any additional images
+      const images = [item.image];
+      // If item has gallery array, add those too
+      if ((item as any).gallery && Array.isArray((item as any).gallery)) {
+        images.push(...(item as any).gallery);
+      }
+      setGalleryImages(images);
+    }
+  }, [item]);
 
   const fetchItem = async () => {
     try {
@@ -126,6 +144,23 @@ export function ItemDetail() {
     }
   };
 
+  // Gallery handlers
+  const handleNextImage = () => {
+    setSelectedImageIndex(prev => (prev + 1) % galleryImages.length);
+  };
+
+  const handlePreviousImage = () => {
+    setSelectedImageIndex(prev => (prev - 1 + galleryImages.length) % galleryImages.length);
+  };
+
+  const openGalleryModal = () => {
+    setShowGalleryModal(true);
+  };
+
+  const closeGalleryModal = () => {
+    setShowGalleryModal(false);
+  };
+
   const handleUpdateItem = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -203,17 +238,165 @@ export function ItemDetail() {
         gap: '2rem',
         marginBottom: '2rem'
       }}>
-        {/* Image Section */}
+        {/* Enhanced Image Gallery Section */}
         <div>
-          <img
-            src={item.image}
-            alt={item.title}
-            style={{
-              width: '100%',
-              borderRadius: '0.75rem',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-            }}
-          />
+          {/* Main Image Display */}
+          <div style={{ position: 'relative', marginBottom: '1rem' }}>
+            <img
+              src={galleryImages[selectedImageIndex]}
+              alt={`View ${selectedImageIndex + 1}`}
+              onClick={galleryImages.length > 1 ? openGalleryModal : undefined}
+              style={{
+                width: '100%',
+                borderRadius: '0.75rem',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                cursor: galleryImages.length > 1 ? 'pointer' : 'default',
+                transition: 'transform 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (galleryImages.length > 1) {
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            />
+            
+            {/* Navigation Arrows for Multiple Images */}
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  onClick={handlePreviousImage}
+                  style={{
+                    position: 'absolute',
+                    left: '1rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'background-color 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
+                >
+                  <FiChevronLeft size={24} />
+                </button>
+                
+                <button
+                  onClick={handleNextImage}
+                  style={{
+                    position: 'absolute',
+                    right: '1rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'background-color 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
+                >
+                  <FiChevronRight size={24} />
+                </button>
+                
+                {/* Image Counter */}
+                <div style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '1.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                }}>
+                  {selectedImageIndex + 1} / {galleryImages.length}
+                </div>
+                
+                {/* View All Button */}
+                <button
+                  onClick={openGalleryModal}
+                  style={{
+                    position: 'absolute',
+                    bottom: '1rem',
+                    right: '1rem',
+                    backgroundColor: 'rgba(59, 130, 246, 0.9)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    backdropFilter: 'blur(4px)',
+                  }}
+                >
+                  <FiGrid size={16} /> View All ({galleryImages.length})
+                </button>
+              </>
+            )}
+          </div>
+          
+          {/* Thumbnail Strip */}
+          {galleryImages.length > 1 && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${Math.min(galleryImages.length, 5)}, 1fr)`,
+              gap: '0.5rem',
+            }}>
+              {galleryImages.map((img, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  style={{
+                    border: selectedImageIndex === index ? '3px solid #3b82f6' : '2px solid transparent',
+                    borderRadius: '0.5rem',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    opacity: selectedImageIndex === index ? 1 : 0.7,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedImageIndex !== index) {
+                      e.currentTarget.style.opacity = '1';
+                    }
+                  }}
+                >
+                  <img
+                    src={img}
+                    alt={`Thumbnail ${index + 1}`}
+                    style={{
+                      width: '100%',
+                      height: '80px',
+                      objectFit: 'cover',
+                      display: 'block',
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Details Section */}
@@ -370,6 +553,190 @@ export function ItemDetail() {
           </div>
         </div>
       </div>
+
+      {/* Full-Screen Gallery Modal */}
+      {showGalleryModal && (
+        <div 
+          onClick={closeGalleryModal}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '2rem',
+          }}
+        >
+          {/* Close Button */}
+          <button
+            onClick={closeGalleryModal}
+            style={{
+              position: 'absolute',
+              top: '2rem',
+              right: '2rem',
+              backgroundColor: 'transparent',
+              color: 'white',
+              border: 'none',
+              fontSize: '2rem',
+              cursor: 'pointer',
+              width: '50px',
+              height: '50px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background-color 0.2s',
+              zIndex: 10000,
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            ✕
+          </button>
+
+          {/* Navigation Buttons */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePreviousImage();
+            }}
+            style={{
+              position: 'absolute',
+              left: '2rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              width: '60px',
+              height: '60px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background-color 0.2s',
+              fontSize: '2rem',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+          >
+            <FiChevronLeft size={32} />
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNextImage();
+            }}
+            style={{
+              position: 'absolute',
+              right: '2rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              width: '60px',
+              height: '60px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background-color 0.2s',
+              fontSize: '2rem',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+          >
+            <FiChevronRight size={32} />
+          </button>
+
+          {/* Main Image - Full Screen */}
+          <img
+            src={galleryImages[selectedImageIndex]}
+            alt={`Gallery view ${selectedImageIndex + 1}`}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100vh',
+              objectFit: 'contain',
+              borderRadius: '0.5rem',
+            }}
+          />
+
+          {/* Thumbnail Strip at Bottom */}
+          <div style={{
+            position: 'absolute',
+            bottom: '2rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: '0.75rem',
+            padding: '1rem',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            borderRadius: '1rem',
+            backdropFilter: 'blur(8px)',
+          }}>
+            {galleryImages.map((img, index) => (
+              <button
+                key={index}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedImageIndex(index);
+                }}
+                style={{
+                  border: selectedImageIndex === index ? '3px solid #3b82f6' : '2px solid transparent',
+                  borderRadius: '0.5rem',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  opacity: selectedImageIndex === index ? 1 : 0.6,
+                  width: '80px',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedImageIndex !== index) {
+                    e.currentTarget.style.opacity = '1';
+                  }
+                }}
+              >
+                <img
+                  src={img}
+                  alt={`Thumbnail ${index + 1}`}
+                  style={{
+                    width: '100%',
+                    height: '60px',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+
+          {/* Image Counter */}
+          <div style={{
+            position: 'absolute',
+            top: '2rem',
+            left: '2rem',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            color: 'white',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '1.5rem',
+            fontSize: '1rem',
+            fontWeight: 600,
+            backdropFilter: 'blur(4px)',
+          }}>
+            {selectedImageIndex + 1} / {galleryImages.length} images
+          </div>
+        </div>
+      )}
     </div>
   );
 }

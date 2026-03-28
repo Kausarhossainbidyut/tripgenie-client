@@ -73,7 +73,12 @@ export function AdminItemsManagement() {
     e.preventDefault();
     try {
       loading.show('Creating destination...');
-      const response = await itemService.createItem(newItem);
+      // Include gallery images in the item data
+      const itemDataWithGallery = {
+        ...newItem,
+        gallery: uploadedGalleryUrls.length > 0 ? uploadedGalleryUrls : undefined
+      };
+      const response = await itemService.createItem(itemDataWithGallery);
       if (response.success) {
         alert.success('Destination created successfully!');
         setShowCreateForm(false);
@@ -88,6 +93,8 @@ export function AdminItemsManagement() {
           category: '',
           quantity: 0,
         });
+        setUploadedGalleryUrls([]);
+        setMultipleImagePreviews([]);
       }
       loading.hide();
     } catch (err: any) {
@@ -99,7 +106,12 @@ export function AdminItemsManagement() {
   const handleUpdateItem = async (itemId: string, updateData: Partial<Item>) => {
     try {
       loading.show('Updating destination...');
-      const response = await itemService.updateItem(itemId, updateData);
+      // Include gallery images in the update data
+      const updateDataWithGallery = {
+        ...updateData,
+        gallery: uploadedGalleryUrls.length > 0 ? uploadedGalleryUrls : undefined
+      };
+      const response = await itemService.updateItem(itemId, updateDataWithGallery);
       if (response.success) {
         alert.success('Destination updated successfully!');
         setEditingItem(null);
@@ -294,6 +306,21 @@ export function AdminItemsManagement() {
     setMultipleImagePreviews(prev => prev.filter((_, i) => i !== index));
     setUploadedGalleryUrls(prev => prev.filter((_, i) => i !== index));
   };
+
+  // Load gallery images when editing item
+  useEffect(() => {
+    if (editingItem) {
+      // Support both 'images' (frontend type) and 'gallery' (backend model) field names
+      const galleryImages = (editingItem as any).gallery || (editingItem as any).images;
+      if (galleryImages && galleryImages.length > 0) {
+        setMultipleImagePreviews(galleryImages);
+        setUploadedGalleryUrls(galleryImages);
+      } else {
+        setMultipleImagePreviews([]);
+        setUploadedGalleryUrls([]);
+      }
+    }
+  }, [editingItem]);
 
   if (!user || user.role !== 'admin') {
     return <div style={{ padding: '2rem', textAlign: 'center' }}>Access denied. Admin only.</div>;

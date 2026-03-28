@@ -40,7 +40,8 @@ export interface Item {
   title: string;
   description: string;
   image: string;
-  images?: string[];
+  gallery?: string[]; // Multiple images array (backend field name)
+  images?: string[]; // Alias for backward compatibility
   price: number;
   rating?: number;
   location: string;
