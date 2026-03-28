@@ -6,7 +6,7 @@ import { userService } from '../../services/user.service';
 import type { DashboardStats, DashboardChartData, User } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { AdminItemsManagement } from '../Admin/ItemsManagement';
-import { EnhancedBookingsSection } from './EnhancedBookingsSection';
+import { SimpleBookingsSection } from './SimpleBookingsSection';
 import { alert } from '../../utils/sweetAlert';
 import { FiUsers, FiCalendar, FiMapPin, FiDollarSign, FiBarChart2, FiEdit2, FiTrash2, FiTrendingUp, FiActivity, FiCheckCircle, FiClock, FiArrowUpRight, FiShield, FiGlobe, FiSearch, FiFilter, FiX, FiEye, FiPhone, FiMail, FiUser, FiChevronDown } from 'react-icons/fi';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
@@ -335,7 +335,7 @@ export function AdminDashboard() {
       {/* Content Sections */}
       {activeMenu === 'overview' && <OverviewSection stats={stats} chartData={chartData} />}
       {activeMenu === 'users' && <UsersSection users={users} user={user} onRefresh={fetchUsers} />}
-      {activeMenu === 'bookings' && <EnhancedBookingsSection />}
+      {activeMenu === 'bookings' && <SimpleBookingsSection />}
       {activeMenu === 'items' && <AdminItemsManagement />}
       {activeMenu === 'revenue' && <RevenueSection stats={stats} chartData={chartData} />}
     </div>

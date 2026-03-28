@@ -7,9 +7,7 @@ import { alert } from '../../utils/sweetAlert';
 import type { Booking } from '../../types';
 import { 
   FiUsers, FiCalendar, FiMapPin, FiDollarSign, FiCheckCircle, FiClock, FiX, 
-  FiEye, FiTrash2, FiEdit2, FiPhone, FiMail, FiStar, FiHeart, FiImage,
-  FiHome, FiTag, FiList, FiShield, FiInfo, FiTrendingUp, FiDownload,
-  FiFilter, FiSearch, FiChevronDown, FiChevronUp, FiPlus, FiMinus
+  FiEye, FiTrash2, FiPhone, FiMail, FiFilter, FiSearch
 } from 'react-icons/fi';
 
 export function EnhancedBookingsSection() {
@@ -39,7 +37,8 @@ export function EnhancedBookingsSection() {
       });
       
       if (response.success) {
-        setBookings(response.data.bookings || []);
+        const bookingsData = Array.isArray(response.data) ? response.data : (response.data as any).bookings || [];
+        setBookings(bookingsData);
       }
     } catch (error: any) {
       console.error('Failed to fetch bookings:', error);
@@ -206,19 +205,6 @@ export function EnhancedBookingsSection() {
           </div>
           
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <Button
-              variant="ghost"
-              onClick={handleExportCSV}
-              style={{
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                border: '2px solid rgba(255,255,255,0.3)',
-                backdropFilter: 'blur(10px)'
-              }}
-            >
-              <FiDownload size={18} /> Export CSV
-            </Button>
-            
             {selectedBookings.size > 0 && (
               <Button
                 variant="ghost"
@@ -419,6 +405,7 @@ export function EnhancedBookingsSection() {
                   <EnhancedBookingRow
                     key={booking._id}
                     booking={booking}
+                    index={index}
                     isSelected={selectedBookings.has(booking._id)}
                     onToggleSelect={() => toggleSelectBooking(booking._id)}
                   />
@@ -482,7 +469,7 @@ function AnalyticsCard({ title, value, icon, gradient, trend }: any) {
 }
 
 // Enhanced Booking Row Component - Shows ALL data
-function EnhancedBookingRow({ booking, isSelected, onToggleSelect }: any) {
+function EnhancedBookingRow({ booking, index, isSelected, onToggleSelect }: any) {
   const [showDetails, setShowDetails] = useState(false);
   
   const user = booking.userId || {};
