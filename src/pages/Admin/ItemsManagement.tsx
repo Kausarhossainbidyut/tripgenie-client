@@ -929,6 +929,126 @@ export function AdminItemsManagement() {
                   )}
                 </div>
               </div>
+              
+              {/* Multiple Image Upload - Gallery (Edit Mode) */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+                  Gallery Images (Up to 5 images)
+                </label>
+                <div style={{ 
+                  border: '2px dashed #d1d5db',
+                  borderRadius: '0.375rem',
+                  padding: '1.5rem',
+                  textAlign: 'center',
+                  backgroundColor: '#f9fafb'
+                }}>
+                  {multipleImagePreviews.length > 0 ? (
+                    <div>
+                      <p style={{ color: '#059669', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                        ✓ {multipleImagePreviews.length} image(s) in gallery
+                      </p>
+                      <div style={{ 
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                        gap: '0.75rem',
+                        marginBottom: '1rem'
+                      }}>
+                        {multipleImagePreviews.map((preview, index) => (
+                          <div key={index} style={{ position: 'relative' }}>
+                            <img 
+                              src={preview} 
+                              alt={`Gallery ${index + 1}`}
+                              style={{ 
+                                width: '100%', 
+                                height: '120px', 
+                                objectFit: 'cover',
+                                borderRadius: '0.375rem'
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveGalleryImage(index)}
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                right: '4px',
+                                backgroundColor: '#ef4444',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '28px',
+                                height: '28px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <FiTrash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      {multipleImagePreviews.length < 5 && (
+                        <>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleMultipleImageUpload}
+                            disabled={uploadingMultipleImages}
+                            style={{ display: 'none' }}
+                            id="edit-multiple-image-upload"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => document.getElementById('edit-multiple-image-upload')?.click()}
+                            isLoading={uploadingMultipleImages}
+                          >
+                            <FiUpload style={{ marginRight: '0.5rem' }} />
+                            Add More Images
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <FiUpload size={32} color="#9ca3af" style={{ margin: '0 auto 1rem' }} />
+                      <p style={{ color: '#6b7280', marginBottom: '0.75rem' }}>
+                        No gallery images yet. Add multiple images for this destination.
+                      </p>
+                      <p style={{ color: '#9ca3af', fontSize: '0.75rem', marginBottom: '0.75rem' }}>
+                        Select up to 5 images at once
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleMultipleImageUpload}
+                        disabled={uploadingMultipleImages}
+                        style={{ display: 'none' }}
+                        id="edit-multiple-image-upload"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('edit-multiple-image-upload')?.click()}
+                        isLoading={uploadingMultipleImages}
+                      >
+                        <FiUpload style={{ marginRight: '0.5rem' }} />
+                        Choose Multiple Images
+                      </Button>
+                      <p style={{ color: '#9ca3af', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                        Max size: 5MB each. Formats: JPG, PNG, WebP
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <Input
                   type="number"
