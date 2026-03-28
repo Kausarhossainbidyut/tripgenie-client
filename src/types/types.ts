@@ -73,12 +73,12 @@ export interface PaginationInfo {
 export interface Booking {
   _id?: string;
   userId: string;
-  itemId: string | Item;
+  itemId: string | Item; // Can be string (backend reference) or populated Item object
   quantity: number;
   totalPrice: number;
   status: 'pending' | 'confirmed' | 'cancelled';
-  paymentStatus?: 'pending' | 'paid' | 'refunded';
-  refundStatus?: 'pending' | 'completed' | 'failed';
+  paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded';
+  refundStatus?: 'none' | 'pending' | 'completed';
   refundAmount?: number;
   cancelledAt?: string;
   cancellationReason?: string;
