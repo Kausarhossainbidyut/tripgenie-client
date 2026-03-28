@@ -3,7 +3,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { aiService } from '../../services/ai.service';
 import type { AIChatResponse } from '../../types';
-import { FiMessageSquare, FiSend, FiBot, FiUser } from 'react-icons/fi';
+import { FiMessageSquare, FiSend, FiUser, FiCpu } from 'react-icons/fi';
 
 export function AIChat() {
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([
@@ -76,7 +76,7 @@ export function AIChat() {
         justifyContent: 'center',
         gap: '0.5rem'
       }}>
-        <FiBot size={32} color="#3b82f6" /> AI Travel Assistant
+        <FiCpu size={32} color="#3b82f6" /> AI Travel Assistant
       </h1>
 
       {/* Chat Messages */}
@@ -109,7 +109,7 @@ export function AIChat() {
                   alignItems: 'start'
                 }}
               >
-                {msg.role === 'assistant' && <FiBot size={20} style={{ flexShrink: 0, marginTop: '0.125rem' }} />}
+                {msg.role === 'assistant' && <FiCpu size={20} style={{ flexShrink: 0, marginTop: '0.125rem' }} />}
                 {msg.role === 'user' && <FiUser size={20} style={{ flexShrink: 0, marginTop: '0.125rem' }} />}
                 <p style={{ lineHeight: '1.6', whiteSpace: 'pre-wrap', flex: 1 }}>{msg.content}</p>
               </div>
@@ -125,7 +125,7 @@ export function AIChat() {
           ))}
           {loading && (
             <div style={{ alignSelf: 'flex-start', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <FiBot size={20} color="#3b82f6" />
+              <FiCpu size={20} color="#3b82f6" />
               <div style={{ 
                 padding: '1rem',
                 borderRadius: '0.75rem',

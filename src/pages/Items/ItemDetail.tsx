@@ -8,7 +8,7 @@ import { wishlistService } from '../../services/wishlist.service';
 import type { Item } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { alert, loading } from '../../utils/sweetAlert';
-import { FiHeart, FiShoppingCart, FiEdit, FiTrash2, FiMapPin, FiDollarSign, FiStar } from 'react-icons/fi';
+import { FiHeart, FiShoppingCart, FiEdit, FiTrash2, FiMapPin, FiDollarSign, FiStar, FiMessageSquare, FiEye } from 'react-icons/fi';
 
 export function ItemDetail() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -290,17 +290,23 @@ export function ItemDetail() {
             </div>
           )}
 
-          {/* Action Buttons - Book Now for Users Only */}
+          {/* Action Buttons - Book Now for All Users */}
           <div style={{ display: 'flex', gap: '0.75rem', flexDirection: 'column' }}>
-            {/* Show Book Now button only for regular users (not admins) */}
-            {user && user.role !== 'admin' && item.quantity > 0 && (
+            {/* Book Now Button - Show to all users, prompt login if not authenticated */}
+            {item.quantity > 0 && (
               <Button
                 onClick={handleBookNow}
                 isLoading={bookingLoading}
                 size="lg"
-                style={{ width: '100%' }}
+                style={{ 
+                  width: '100%',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  fontWeight: 600
+                }}
               >
-                🎉 Book Now - ৳{item.price * bookingQuantity}
+                <FiShoppingCart size={20} style={{ marginRight: '0.5rem' }} /> Book Now - ৳{item.price * bookingQuantity}
               </Button>
             )}
             
@@ -315,7 +321,11 @@ export function ItemDetail() {
                 borderColor: isInWishlist ? '#ef4444' : '#d1d5db'
               }}
             >
-              {isInWishlist ? '❤️ Remove from Wishlist' : '🤍 Add to Wishlist'}
+              {isInWishlist ? (
+                <><FiHeart size={20} style={{ marginRight: '0.5rem' }} /> Remove from Wishlist</>
+              ) : (
+                <><FiHeart size={20} style={{ marginRight: '0.5rem' }} /> Add to Wishlist</>
+              )}
             </Button>
 
             <Button
@@ -324,7 +334,7 @@ export function ItemDetail() {
               size="lg"
               style={{ width: '100%' }}
             >
-              💬 Read Reviews ({item.rating ? 'See all' : 'Be first'})
+              <FiMessageSquare size={20} style={{ marginRight: '0.5rem' }} /> {item.rating ? 'Read Reviews' : 'Be first to review'}
             </Button>
           </div>
         </div>

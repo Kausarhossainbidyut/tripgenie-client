@@ -7,7 +7,7 @@ import { bookingService } from '../../services/booking.service';
 import type { Item, ItemFilters } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { alert } from '../../utils/sweetAlert';
-import { FiSearch, FiFilter, FiDollarSign, FiStar, FiMapPin } from 'react-icons/fi';
+import { FiSearch, FiFilter, FiDollarSign, FiStar, FiMapPin, FiShoppingCart, FiEye } from 'react-icons/fi';
 
 export function Items() {
   const navigate = useNavigate();
@@ -219,8 +219,8 @@ export function Items() {
                     alignItems: 'center',
                     marginTop: '1rem'
                   }}>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>
-                      ৳{item.price}
+                    <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <FiDollarSign size={20} />{item.price}
                     </span>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       {/* Show Book Now button only for regular users (not admins) */}
@@ -230,8 +230,13 @@ export function Items() {
                           onClick={() => handleBookNow(item._id!)}
                           isLoading={bookingLoading}
                           disabled={!item.quantity || item.quantity === 0}
+                          style={{ 
+                            backgroundColor: item.quantity > 0 ? '#3b82f6' : '#9ca3af',
+                            color: 'white',
+                            border: 'none'
+                          }}
                         >
-                          🎉 Book Now
+                          <FiShoppingCart size={16} style={{ marginRight: '0.25rem' }} /> Book Now
                         </Button>
                       )}
                       <Button
@@ -240,7 +245,7 @@ export function Items() {
                         onClick={() => navigate(`/items/${item._id}`)}
                         style={{ flex: 1 }}
                       >
-                        View Details
+                        <FiEye size={16} style={{ marginRight: '0.25rem' }} /> View Details
                       </Button>
                     </div>
                   </div>
