@@ -43,17 +43,48 @@ export const uploadService = {
       formData.append('images', file);
     });
 
-    const response = await api.post<UploadApiResponse>('/v1/upload/travel-images', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
-    if (!response.data.files || !Array.isArray(response.data.files)) {
-      throw new Error('Upload failed - no files returned');
+    try {
+      const response = await api.post<UploadApiResponse>('/v1/upload/travel-images', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      console.log('Multiple upload raw response:', response);
+      console.log('Multiple upload response data:', response.data);
+      console.log('Files property type:', typeof response.data.files, Array.isArray(response.data.files));
+      
+      // Backend returns files as an object with field name as key containing array
+      // Structure: { files: { images: [array of upload results] } }
+      let uploadResults: UploadResponse[] = [];
+      
+      if (response.data.files) {
+        // Check if files is an object with 'images' key (backend format)
+        const filesObj = response.data.files as any;
+        if (filesObj.images && Array.isArray(filesObj.images)) {
+          uploadResults = filesObj.images;
+        } else if (Array.isArray(response.data.files)) {
+          // Fallback if it's directly an array
+          uploadResults = response.data.files;
+        }
+      }
+      
+      console.log('Extracted upload results:', uploadResults);
+      
+      if (!uploadResults || uploadResults.length === 0) {
+        console.error('No valid upload results extracted');
+        throw new Error('Upload failed - no files returned from server');
+      }
+      
+      return uploadResults;
+    } catch (error: any) {
+      console.error('Multiple upload error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+      throw error;
     }
-    
-    return response.data.files;
   },
 
   /**

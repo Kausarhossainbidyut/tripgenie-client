@@ -42,6 +42,12 @@ export function AdminItemsManagement() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [uploadingImage, setUploadingImage] = useState(false);
+  
+  // Multiple image upload state
+  const [selectedMultipleImages, setSelectedMultipleImages] = useState<File[]>([]);
+  const [multipleImagePreviews, setMultipleImagePreviews] = useState<string[]>([]);
+  const [uploadingMultipleImages, setUploadingMultipleImages] = useState(false);
+  const [uploadedGalleryUrls, setUploadedGalleryUrls] = useState<string[]>([]);
 
   useEffect(() => {
     fetchItems();
@@ -215,6 +221,78 @@ export function AdminItemsManagement() {
     } finally {
       setEditUploadingImage(false);
     }
+  };
+
+  const handleMultipleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    console.log('Files selected for upload:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+
+    // Validate all files
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        await alert.error('Invalid File', 'Please select image files only');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        await alert.error('File Too Large', `File "${file.name}" exceeds 5MB limit`);
+        return;
+      }
+    }
+
+    // Limit to 5 images as per backend API
+    if (files.length > 5) {
+      await alert.warning('Too Many Files', 'Maximum 5 images allowed at once');
+      files.splice(5); // Keep only first 5
+    }
+
+    try {
+      setUploadingMultipleImages(true);
+      
+      console.log('Starting multiple image upload...', files.length, 'files');
+      
+      // Upload multiple images using travel-images endpoint
+      const uploadResults = await uploadService.uploadTravelImages(files);
+      
+      console.log('Upload results:', uploadResults);
+      
+      if (uploadResults && uploadResults.length > 0) {
+        // Extract URLs from all uploaded images
+        const urls = uploadResults.map(result => result.url);
+        
+        console.log('Extracted URLs:', urls);
+        
+        // Add to gallery URLs
+        setUploadedGalleryUrls(prev => [...prev, ...urls]);
+        
+        // Create previews for all uploaded images
+        const previews = urls;
+        setMultipleImagePreviews(prev => [...prev, ...previews]);
+        
+        await alert.success('Images Uploaded!', `${uploadResults.length} image(s) uploaded successfully`);
+      } else {
+        console.error('No results returned from upload');
+        throw new Error('Upload failed - no images returned');
+      }
+    } catch (err: any) {
+      console.error('Multiple image upload error:', err);
+      console.error('Error response:', err.response);
+      console.error('Error status:', err.response?.status);
+      console.error('Error data:', err.response?.data);
+      console.error('Error message:', err.message);
+      
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to upload images';
+      
+      await alert.error('Upload Failed', errorMessage);
+    } finally {
+      setUploadingMultipleImages(false);
+    }
+  };
+
+  const handleRemoveGalleryImage = (index: number) => {
+    setMultipleImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setUploadedGalleryUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   if (!user || user.role !== 'admin') {
@@ -406,6 +484,114 @@ export function AdminItemsManagement() {
                   )}
                 </div>
               </div>
+
+              {/* Multiple Image Upload - Gallery */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
+                  Gallery Images (Up to 5 images)
+                </label>
+                <div style={{ 
+                  border: '2px dashed #d1d5db',
+                  borderRadius: '0.375rem',
+                  padding: '1.5rem',
+                  textAlign: 'center',
+                  backgroundColor: '#f9fafb'
+                }}>
+                  {multipleImagePreviews.length > 0 ? (
+                    <div>
+                      <p style={{ color: '#059669', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                        ✓ {multipleImagePreviews.length} image(s) uploaded
+                      </p>
+                      <div style={{ 
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                        gap: '0.75rem',
+                        marginBottom: '1rem'
+                      }}>
+                        {multipleImagePreviews.map((preview, index) => (
+                          <div key={index} style={{ position: 'relative' }}>
+                            <img 
+                              src={preview} 
+                              alt={`Gallery ${index + 1}`}
+                              style={{ 
+                                width: '100%', 
+                                height: '120px', 
+                                objectFit: 'cover',
+                                borderRadius: '0.375rem'
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveGalleryImage(index)}
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                right: '4px',
+                                backgroundColor: '#ef4444',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '28px',
+                                height: '28px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <FiTrash2 size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('multiple-image-upload')?.click()}
+                        isLoading={uploadingMultipleImages}
+                        disabled={multipleImagePreviews.length >= 5}
+                      >
+                        <FiUpload style={{ marginRight: '0.5rem' }} />
+                        {multipleImagePreviews.length >= 5 ? 'Max Images Reached' : 'Add More Images'}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <FiUpload size={32} color="#9ca3af" style={{ margin: '0 auto 1rem' }} />
+                      <p style={{ color: '#6b7280', marginBottom: '0.75rem' }}>
+                        Upload multiple destination images (gallery)
+                      </p>
+                      <p style={{ color: '#9ca3af', fontSize: '0.75rem', marginBottom: '0.75rem' }}>
+                        Select up to 5 images at once
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleMultipleImageUpload}
+                        disabled={uploadingMultipleImages}
+                        style={{ display: 'none' }}
+                        id="multiple-image-upload"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('multiple-image-upload')?.click()}
+                        isLoading={uploadingMultipleImages}
+                      >
+                        <FiUpload style={{ marginRight: '0.5rem' }} />
+                        Choose Multiple Images
+                      </Button>
+                      <p style={{ color: '#9ca3af', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                        Max size: 5MB each. Formats: JPG, PNG, WebP
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <Input
                   type="number"
@@ -453,6 +639,8 @@ export function AdminItemsManagement() {
                     setShowCreateForm(false);
                     setImagePreview('');
                     setSelectedImage(null);
+                    setMultipleImagePreviews([]);
+                    setUploadedGalleryUrls([]);
                   }} 
                   type="button"
                 >
