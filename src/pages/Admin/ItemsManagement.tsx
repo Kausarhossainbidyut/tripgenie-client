@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { itemService } from '../../services/item.service';
+import { uploadService } from '../../services/upload.service';
 import type { Item, ItemFilters } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { alert, loading } from '../../utils/sweetAlert';
+import { FiUpload, FiImage, FiTrash2, FiEdit } from 'react-icons/fi';
 
 export function AdminItemsManagement() {
   const navigate = useNavigate();
@@ -23,6 +25,8 @@ export function AdminItemsManagement() {
   });
   const [pagination, setPagination] = useState<{ page: number; limit: number; total: number; totalPages: number } | undefined>();
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState<string>('');
+  const [editUploadingImage, setEditUploadingImage] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newItem, setNewItem] = useState<Partial<Item>>({
@@ -35,6 +39,9 @@ export function AdminItemsManagement() {
     category: '',
     quantity: 0,
   });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     fetchItems();
@@ -119,6 +126,95 @@ export function AdminItemsManagement() {
 
   const handlePageChange = (newPage: number) => {
     setFilters(prev => ({ ...prev, page: newPage }));
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      await alert.error('Invalid File', 'Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      await alert.error('File Too Large', 'Maximum file size is 5MB');
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      
+      console.log('Starting upload...', file.name, file.size, file.type);
+      
+      // Upload item image using dedicated endpoint
+      const uploadResult = await uploadService.uploadItemImage(file);
+      
+      console.log('Upload result:', uploadResult);
+      
+      // uploadResult is now UploadResponse directly with url property
+      if (uploadResult && uploadResult.url) {
+        // Set the image URL in the form
+        setNewItem(prev => ({ ...prev, image: uploadResult.url }));
+        setImagePreview(uploadResult.url);
+        setSelectedImage(file);
+        await alert.success('Image Uploaded!', 'Image uploaded successfully');
+      } else {
+        console.error('No URL in upload result');
+        throw new Error('Upload failed - no URL returned from server');
+      }
+    } catch (err: any) {
+      console.error('Image upload error:', err);
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+      
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to upload image';
+      
+      await alert.error('Upload Failed', errorMessage);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      await alert.error('Invalid File', 'Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      await alert.error('File Too Large', 'Maximum file size is 5MB');
+      return;
+    }
+
+    try {
+      setEditUploadingImage(true);
+      
+      // Upload item image using dedicated endpoint
+      const uploadResult = await uploadService.uploadItemImage(file);
+      
+      // uploadResult is now UploadResponse directly with url property
+      if (uploadResult && uploadResult.url) {
+        // Set the image URL in the editing item
+        setEditingItem(prev => prev ? ({ ...prev, image: uploadResult.url }) : null);
+        setEditImagePreview(uploadResult.url);
+        await alert.success('Image Uploaded!', 'Image uploaded successfully');
+      } else {
+        throw new Error('Upload failed - no URL returned from server');
+      }
+    } catch (err: any) {
+      console.error('Image upload error:', err);
+      await alert.error('Upload Failed', err.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setEditUploadingImage(false);
+    }
   };
 
   if (!user || user.role !== 'admin') {
@@ -241,12 +337,75 @@ export function AdminItemsManagement() {
                   }}
                 />
               </div>
-              <Input
-                label="Image URL"
-                value={newItem.image}
-                onChange={(e) => setNewItem(prev => ({ ...prev, image: e.target.value }))}
-                required
-              />
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Image Upload</label>
+                <div style={{ 
+                  border: '2px dashed #d1d5db',
+                  borderRadius: '0.375rem',
+                  padding: '1.5rem',
+                  textAlign: 'center',
+                  backgroundColor: imagePreview ? '#f0fdf4' : '#f9fafb'
+                }}>
+                  {imagePreview ? (
+                    <div>
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview"
+                        style={{ 
+                          maxWidth: '100%', 
+                          maxHeight: '200px', 
+                          borderRadius: '0.375rem',
+                          marginBottom: '1rem'
+                        }}
+                      />
+                      <p style={{ color: '#059669', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                        ✓ Image uploaded successfully
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setImagePreview('');
+                          setSelectedImage(null);
+                          setNewItem(prev => ({ ...prev, image: '' }));
+                        }}
+                        style={{ color: '#ef4444', borderColor: '#ef4444' }}
+                      >
+                        <FiTrash2 style={{ marginRight: '0.25rem' }} /> Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <FiUpload size={32} color="#9ca3af" style={{ margin: '0 auto 1rem' }} />
+                      <p style={{ color: '#6b7280', marginBottom: '0.75rem' }}>
+                        Upload destination image to imgBB
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                        style={{ display: 'none' }}
+                        id="image-upload"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                        isLoading={uploadingImage}
+                      >
+                        <FiUpload style={{ marginRight: '0.5rem' }} />
+                        {uploadingImage ? 'Uploading...' : 'Choose Image'}
+                      </Button>
+                      <p style={{ color: '#9ca3af', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                        Max size: 5MB. Formats: JPG, PNG, WebP
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <Input
                   type="number"
@@ -288,7 +447,15 @@ export function AdminItemsManagement() {
                 required
               />
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                <Button variant="outline" onClick={() => setShowCreateForm(false)} type="button">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setImagePreview('');
+                    setSelectedImage(null);
+                  }} 
+                  type="button"
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={updateLoading}>
@@ -472,12 +639,81 @@ export function AdminItemsManagement() {
                   }}
                 />
               </div>
-              <Input
-                label="Image URL"
-                value={editingItem.image}
-                onChange={(e) => setEditingItem(prev => prev ? ({ ...prev, image: e.target.value }) : null)}
-                required
-              />
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Image Upload</label>
+                <div style={{ 
+                  border: '2px dashed #d1d5db',
+                  borderRadius: '0.375rem',
+                  padding: '1.5rem',
+                  textAlign: 'center',
+                  backgroundColor: editImagePreview || editingItem.image ? '#f0fdf4' : '#f9fafb'
+                }}>
+                  {(editImagePreview || editingItem.image) ? (
+                    <div>
+                      <img 
+                        src={editImagePreview || editingItem.image} 
+                        alt="Current"
+                        style={{ 
+                          maxWidth: '100%', 
+                          maxHeight: '200px', 
+                          borderRadius: '0.375rem',
+                          marginBottom: '1rem'
+                        }}
+                      />
+                      <p style={{ color: '#059669', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                        ✓ Current image
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleEditImageUpload}
+                        disabled={editUploadingImage}
+                        style={{ display: 'none' }}
+                        id="edit-image-upload"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('edit-image-upload')?.click()}
+                        isLoading={editUploadingImage}
+                        style={{ marginRight: '0.5rem' }}
+                      >
+                        <FiUpload style={{ marginRight: '0.5rem' }} />
+                        {editUploadingImage ? 'Uploading...' : 'Change Image'}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <FiUpload size={32} color="#9ca3af" style={{ margin: '0 auto 1rem' }} />
+                      <p style={{ color: '#6b7280', marginBottom: '0.75rem' }}>
+                        Upload new destination image
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleEditImageUpload}
+                        disabled={editUploadingImage}
+                        style={{ display: 'none' }}
+                        id="edit-image-upload"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('edit-image-upload')?.click()}
+                        isLoading={editUploadingImage}
+                      >
+                        <FiUpload style={{ marginRight: '0.5rem' }} />
+                        {editUploadingImage ? 'Uploading...' : 'Choose Image'}
+                      </Button>
+                      <p style={{ color: '#9ca3af', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                        Max size: 5MB. Formats: JPG, PNG, WebP
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <Input
                   type="number"
@@ -518,7 +754,14 @@ export function AdminItemsManagement() {
                 required
               />
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                <Button variant="outline" onClick={() => setEditingItem(null)} type="button">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setEditingItem(null);
+                    setEditImagePreview('');
+                  }} 
+                  type="button"
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={updateLoading}>
