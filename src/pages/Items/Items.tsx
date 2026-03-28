@@ -180,44 +180,81 @@ export function Items() {
             marginBottom: '2rem'
           }}>
             {items.map((item) => (
-              <div key={item._id} className="card" style={{ padding: '0' }}>
+              <div key={item._id} className="card" style={{ 
+                padding: '0',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%'
+              }}>
                 <img
                   src={item.image}
                   alt={item.title}
                   style={{
                     width: '100%',
-                    height: '200px',
+                    height: '220px',
                     objectFit: 'cover',
                     borderRadius: '0.5rem 0.5rem 0 0',
+                    flexShrink: 0
                   }}
                 />
-                <div style={{ padding: '1rem' }}>
+                <div style={{ 
+                  padding: '1rem', 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flexGrow: 1
+                }}>
                   <div style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     alignItems: 'start', 
                     marginBottom: '0.5rem' 
                   }}>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>
+                    <h3 style={{ 
+                      fontSize: '1.125rem', 
+                      fontWeight: 600, 
+                      color: '#111827',
+                      margin: 0,
+                      lineHeight: 1.3,
+                      maxHeight: '3.2rem',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}>
                       {item.title}
                     </h3>
                     {item.rating && (
-                      <span style={{ color: '#f59e0b', fontWeight: 600 }}>
+                      <span style={{ color: '#f59e0b', fontWeight: 600, flexShrink: 0, marginLeft: '0.5rem' }}>
                         ⭐ {item.rating.toFixed(1)}
                       </span>
                     )}
                   </div>
-                  <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                  <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '0.5rem', margin: 0 }}>
                     📍 {item.location}
                   </p>
-                  <p style={{ color: '#374151', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                  <p style={{ 
+                    color: '#374151', 
+                    fontSize: '0.875rem', 
+                    marginBottom: '0.75rem',
+                    margin: 0,
+                    lineHeight: 1.5,
+                    maxHeight: '3.6rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical'
+                  }}>
                     {item.description}
                   </p>
                   <div style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     alignItems: 'center',
-                    marginTop: '1rem'
+                    marginTop: 'auto',
+                    paddingTop: '1rem',
+                    borderTop: '1px solid #e5e7eb'
                   }}>
                     <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       <FiDollarSign size={20} />{item.price}
