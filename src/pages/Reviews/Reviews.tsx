@@ -7,6 +7,8 @@ import { itemService } from '../../services/item.service';
 import { aiService } from '../../services/ai.service';
 import type { Review, Item } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
+import { alert, loading } from '../../utils/sweetAlert';
+import { FiStar, FiTrash2, FiMessageSquare, FiSmile } from 'react-icons/fi';
 
 export function Reviews() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -69,29 +71,30 @@ export function Reviews() {
       });
 
       if (response.success) {
-        alert('Review added successfully!');
+        await alert.success('Review Added!', 'Thank you for sharing your experience');
         setNewReview({ rating: 5, comment: '' });
         setShowForm(false);
         fetchReviews();
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to add review');
+      await alert.error('Review Failed', err.response?.data?.message || 'Failed to add review');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteReview = async (reviewId: string) => {
-    if (!confirm('Are you sure you want to delete this review?')) return;
+    const isConfirmed = await alert.deleteConfirm('this review');
+    if (!isConfirmed) return;
 
     try {
       const response = await reviewService.deleteReview(reviewId);
       if (response.success) {
-        alert('Review deleted successfully!');
+        await alert.success('Review Deleted!', 'The review has been removed successfully');
         fetchReviews();
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete review');
+      await alert.error('Delete Failed', err.response?.data?.message || 'Failed to delete review');
     }
   };
 
@@ -105,7 +108,7 @@ export function Reviews() {
         setAiSummary(response.data.summary);
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to get AI summary');
+      await alert.error('AI Summary Failed', err.response?.data?.message || 'Failed to get AI summary');
     } finally {
       setLoadingAI(false);
     }

@@ -3,11 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { itemService } from '../../services/item.service';
-import { EditItemModal } from '../../components/ui/EditItemModal';
+import { bookingService } from '../../services/booking.service';
 import type { Item, ItemFilters } from '../../types';
+import { useAuth } from '../../hooks/useAuth';
+import { alert } from '../../utils/sweetAlert';
+import { FiSearch, FiFilter, FiDollarSign, FiStar, FiMapPin } from 'react-icons/fi';
 
 export function Items() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,19 +25,7 @@ export function Items() {
     limit: 10,
   });
   const [pagination, setPagination] = useState<{ page: number; limit: number; total: number; totalPages: number } | undefined>();
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<Item | null>(null);
-  const [updateLoading, setUpdateLoading] = useState(false);
-  const [newItem, setNewItem] = useState<Partial<Item>>({
-    title: '',
-    description: '',
-    image: '',
-    price: 0,
-    rating: 0,
-    location: '',
-    category: '',
-    quantity: 0,
-  });
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   useEffect(() => {
     fetchItems();
@@ -55,57 +47,28 @@ export function Items() {
     }
   };
 
-  const handleCreateItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await itemService.createItem(newItem);
-      if (response.success) {
-        alert('Item created successfully!');
-        setShowCreateForm(false);
-        fetchItems();
-        setNewItem({
-          title: '',
-          description: '',
-          image: '',
-          price: 0,
-          rating: 0,
-          location: '',
-          category: '',
-          quantity: 0,
-        });
-      }
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to create item');
+  const handleBookNow = async (itemId: string) => {
+    if (!user) {
+      await alert.warning('Login Required', 'Please login to book a destination');
+      navigate('/login');
+      return;
     }
-  };
 
-  const handleUpdateItem = async (itemId: string, updateData: Partial<Item>) => {
     try {
-      setUpdateLoading(true);
-      const response = await itemService.updateItem(itemId, updateData);
+      setBookingLoading(true);
+      const response = await bookingService.createBooking({
+        itemId,
+        quantity: 1,
+      });
+
       if (response.success) {
-        alert('Item updated successfully!');
-        setEditingItem(null);
-        fetchItems();
+        await alert.success('Booking Created!', 'Your destination has been booked successfully!');
+        navigate('/bookings');
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update item');
+      await alert.error('Booking Failed', err.response?.data?.message || 'Failed to create booking');
     } finally {
-      setUpdateLoading(false);
-    }
-  };
-
-  const handleDeleteItem = async (itemId: string) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
-    
-    try {
-      const response = await itemService.deleteItem(itemId);
-      if (response.success) {
-        alert('Item deleted successfully!');
-        fetchItems();
-      }
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete item');
+      setBookingLoading(false);
     }
   };
 
@@ -132,82 +95,14 @@ export function Items() {
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
-        alignItems: 'center', 
+        alignItems: 'center',
         marginBottom: '1.5rem' 
       }}>
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827' }}>
           Travel Destinations
         </h1>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          {showCreateForm ? 'Cancel' : 'Add New Destination'}
-        </Button>
       </div>
-
-      {/* Create Item Form */}
-      {showCreateForm && (
-        <div className="card" style={{ marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem', color: '#111827' }}>
-            Create New Destination
-          </h2>
-          <form onSubmit={handleCreateItem} className="space-y-4">
-            <Input
-              label="Title"
-              placeholder="Destination name"
-              value={newItem.title}
-              onChange={(e) => setNewItem(prev => ({ ...prev, title: e.target.value }))}
-              required
-            />
-            <Input
-              label="Description"
-              placeholder="Describe this destination"
-              value={newItem.description}
-              onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))}
-              required
-            />
-            <Input
-              label="Image URL"
-              placeholder="https://..."
-              value={newItem.image}
-              onChange={(e) => setNewItem(prev => ({ ...prev, image: e.target.value }))}
-              required
-            />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <Input
-                label="Price (BDT)"
-                type="number"
-                value={newItem.price?.toString()}
-                onChange={(e) => setNewItem(prev => ({ ...prev, price: Number(e.target.value) }))}
-                required
-              />
-              <Input
-                label="Location"
-                placeholder="Where is it located?"
-                value={newItem.location}
-                onChange={(e) => setNewItem(prev => ({ ...prev, location: e.target.value }))}
-                required
-              />
-              <Input
-                label="Category"
-                placeholder="e.g., Beach, Mountain"
-                value={newItem.category}
-                onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value }))}
-                required
-              />
-              <Input
-                label="Quantity Available"
-                type="number"
-                value={newItem.quantity?.toString()}
-                onChange={(e) => setNewItem(prev => ({ ...prev, quantity: Number(e.target.value) }))}
-                required
-              />
-            </div>
-            <Button type="submit" style={{ width: '100%' }}>
-              Create Destination
-            </Button>
-          </form>
-        </div>
-      )}
-
+      
       {/* Filters */}
       <div className="card" style={{ marginBottom: '2rem' }}>
         <div style={{ 
@@ -327,30 +222,27 @@ export function Items() {
                     <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>
                       ৳{item.price}
                     </span>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {/* Show Book Now button only for regular users (not admins) */}
+                      {user && user.role !== 'admin' && (
                         <Button
-                          variant="outline"
                           size="sm"
-                          onClick={() => setEditingItem(item)}
+                          onClick={() => handleBookNow(item._id!)}
+                          isLoading={bookingLoading}
+                          disabled={!item.quantity || item.quantity === 0}
                         >
-                          Edit
+                          🎉 Book Now
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/items/${item._id}`)}
-                        >
-                          View Details
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteItem(item._id!)}
-                          style={{ color: '#ef4444', borderColor: '#ef4444' }}
-                        >
-                          Delete
-                        </Button>
-                      </div>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/items/${item._id}`)}
+                        style={{ flex: 1 }}
+                      >
+                        View Details
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -384,15 +276,6 @@ export function Items() {
         </>
       )}
 
-      {/* Edit Item Modal */}
-      {editingItem && (
-        <EditItemModal
-          item={editingItem}
-          onClose={() => setEditingItem(null)}
-          onSave={handleUpdateItem}
-          loading={updateLoading}
-        />
-      )}
     </div>
   );
 }

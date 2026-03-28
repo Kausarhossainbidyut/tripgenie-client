@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
+import { alert } from '../utils/sweetAlert';
+import { FiMail, FiLock, FiLogIn, FiUserPlus } from 'react-icons/fi';
 
 export function Login() {
   const navigate = useNavigate();
@@ -27,6 +29,7 @@ export function Login() {
     setIsLoading(true);
     try {
       await login({ email: formData.email, password: formData.password });
+      await alert.success('Welcome Back!', 'You have successfully logged in');
       navigate('/dashboard');
     } catch (error: any) {
       setErrors({ submit: error.message || 'Invalid credentials' });
@@ -39,6 +42,7 @@ export function Login() {
     <div style={{ maxWidth: '28rem', margin: '0 auto', padding: '3rem 1rem' }}>
       <div className="card">
         <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.5rem)', fontWeight: 700, textAlign: 'center', marginBottom: '1.5rem', color: '#111827' }}>
+          <FiLogIn style={{ display: 'inline-block', marginRight: '0.5rem', verticalAlign: 'middle' }} />
           Welcome Back to TripGenie
         </h1>
 
@@ -66,7 +70,7 @@ export function Login() {
           )}
 
           <Button type="submit" style={{ width: '100%' }} isLoading={isLoading}>
-            Sign In
+            <FiLogIn style={{ marginRight: '0.5rem' }} /> Sign In
           </Button>
         </form>
 
@@ -87,7 +91,7 @@ export function Login() {
         <p className="text-center text-sm mt-4" style={{ color: '#6b7280' }}>
           Don&apos;t have an account?{' '}
           <Link to="/register" style={{ color: '#3b82f6', textDecoration: 'none' }}>
-            Register
+            <FiUserPlus style={{ display: 'inline-block', marginRight: '0.25rem' }} /> Register
           </Link>
         </p>
       </div>

@@ -7,6 +7,8 @@ import { bookingService } from '../../services/booking.service';
 import { wishlistService } from '../../services/wishlist.service';
 import type { Item } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
+import { alert, loading } from '../../utils/sweetAlert';
+import { FiHeart, FiShoppingCart, FiEdit, FiTrash2, FiMapPin, FiDollarSign, FiStar } from 'react-icons/fi';
 
 export function ItemDetail() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -59,7 +61,7 @@ export function ItemDetail() {
 
   const handleBookNow = async () => {
     if (!user || !itemId) {
-      alert('Please login to book');
+      await alert.warning('Login Required', 'Please login to book this destination');
       navigate('/login');
       return;
     }
@@ -72,11 +74,11 @@ export function ItemDetail() {
       });
 
       if (response.success) {
-        alert('Booking created successfully!');
+        await alert.success('Booking Created!', 'Your destination has been booked successfully!');
         navigate('/bookings');
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to create booking');
+      await alert.error('Booking Failed', err.response?.data?.message || 'Failed to create booking');
     } finally {
       setBookingLoading(false);
     }
@@ -84,7 +86,7 @@ export function ItemDetail() {
 
   const handleWishlistToggle = async () => {
     if (!user || !itemId) {
-      alert('Please login to add to wishlist');
+      await alert.warning('Login Required', 'Please login to add items to your wishlist');
       navigate('/login');
       return;
     }
@@ -100,19 +102,19 @@ export function ItemDetail() {
         );
         if (wishlistItem?._id) {
           await wishlistService.removeFromWishlist(wishlistItem._id);
-          alert('Removed from wishlist');
+          await alert.info('Removed from Wishlist', 'This destination has been removed from your wishlist');
           setIsInWishlist(false);
         }
       } else {
         // Add to wishlist
         const response = await wishlistService.addToWishlist(itemId);
         if (response.success) {
-          alert('Added to wishlist!');
+          await alert.success('Added to Wishlist!', 'This destination has been added to your wishlist');
           setIsInWishlist(true);
         }
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update wishlist');
+      await alert.error('Wishlist Update Failed', err.response?.data?.message || 'Failed to update wishlist');
     } finally {
       setWishlistLoading(false);
     }
@@ -130,30 +132,29 @@ export function ItemDetail() {
       setUpdateLoading(true);
       const response = await itemService.updateItem(itemId!, item);
       if (response.success) {
-        alert('Item updated successfully!');
+        await alert.success('Item Updated!', 'The destination information has been updated successfully');
         setEditMode(false);
         fetchItem();
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update item');
+      await alert.error('Update Failed', err.response?.data?.message || 'Failed to update item');
     } finally {
       setUpdateLoading(false);
     }
   };
 
   const handleDeleteItem = async () => {
-    if (!confirm('Are you sure you want to delete this destination? This action cannot be undone.')) {
-      return;
-    }
+    const isConfirmed = await alert.deleteConfirm('this destination');
+    if (!isConfirmed) return;
     
     try {
       const response = await itemService.deleteItem(itemId!);
       if (response.success) {
-        alert('Item deleted successfully!');
+        await alert.success('Item Deleted!', 'The destination has been deleted successfully');
         navigate('/items');
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete item');
+      await alert.error('Delete Failed', err.response?.data?.message || 'Failed to delete item');
     }
   };
 
@@ -195,32 +196,6 @@ export function ItemDetail() {
       >
         ← Back to Destinations
       </Button>
-
-      {/* Admin/Edit Controls */}
-      {user && (
-        <div style={{ 
-          display: 'flex', 
-          gap: '0.5rem', 
-          justifyContent: 'flex-end',
-          marginBottom: '1rem'
-        }}>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/items')}
-          >
-            Edit Destination (Go to List)
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDeleteItem}
-            style={{ color: '#ef4444', borderColor: '#ef4444' }}
-          >
-            Delete Destination
-          </Button>
-        </div>
-      )}
 
       <div style={{ 
         display: 'grid', 
@@ -315,9 +290,10 @@ export function ItemDetail() {
             </div>
           )}
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Book Now for Users Only */}
           <div style={{ display: 'flex', gap: '0.75rem', flexDirection: 'column' }}>
-            {item.quantity > 0 && (
+            {/* Show Book Now button only for regular users (not admins) */}
+            {user && user.role !== 'admin' && item.quantity > 0 && (
               <Button
                 onClick={handleBookNow}
                 isLoading={bookingLoading}

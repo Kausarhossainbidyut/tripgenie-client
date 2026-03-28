@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { Button } from '../../ui/Button';
 import { APP_NAME } from '../../../constants';
+import { FiGlobe, FiMapPin, FiMessageSquare, FiHeart, FiCalendar, FiUser, FiLogOut, FiMenu, FiX, FiLogIn, FiUserPlus } from 'react-icons/fi';
 
 export function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
@@ -12,48 +13,55 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 border-b bg-white shadow-sm" style={{ borderColor: '#e5e7eb' }}>
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#3b82f6', textDecoration: 'none' }}>
-          ✈️ {APP_NAME}
+          <FiGlobe style={{ display: 'inline-block', marginRight: '0.5rem', verticalAlign: 'middle' }} />
+          {APP_NAME}
         </Link>
 
         {/* Desktop Menu */}
         <div className="desktop-menu" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {isAuthenticated ? (
             <>
-              <Link to="/items" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
-                Destinations
+              <Link to="/items" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <FiMapPin size={16} /> Destinations
               </Link>
-              <Link to="/ai-chat" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
-                🤖 AI Chat
+              <Link to="/ai-chat" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <FiMessageSquare size={16} /> AI Chat
               </Link>
-              <Link to="/wishlist" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
-                Wishlist ❤️
+              <Link to="/wishlist" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <FiHeart size={16} /> Wishlist
               </Link>
-              <Link to="/bookings" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
-                Bookings
+              <Link to="/bookings" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <FiCalendar size={16} /> Bookings
               </Link>
-              <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>Hello, {user?.name}</span>
+              <span style={{ fontSize: '0.875rem', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <FiUser size={16} /> Hello, {user?.name}
+              </span>
               <Link to="/dashboard">
                 <Button variant="ghost" size="sm">
-                  {user?.role === 'admin' ? '🔐 Admin Panel' : 'Dashboard'}
+                  {user?.role === 'admin' ? (
+                    <>🔐 Admin Panel</>
+                  ) : (
+                    <>Dashboard</>
+                  )}
                 </Button>
               </Link>
               <Button variant="outline" size="sm" onClick={logout}>
-                Logout
+                <FiLogOut style={{ marginRight: '0.5rem' }} /> Logout
               </Button>
             </>
           ) : (
             <>
-              <Link to="/items" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
-                Destinations
+              <Link to="/items" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <FiMapPin size={16} /> Destinations
               </Link>
-              <Link to="/ai-chat" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500 }}>
-                🤖 AI Chat
+              <Link to="/ai-chat" style={{ textDecoration: 'none', color: '#374151', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <FiMessageSquare size={16} /> AI Chat
               </Link>
               <Link to="/login">
-                <Button variant="ghost" size="sm">Login</Button>
+                <Button variant="ghost" size="sm"><FiLogIn style={{ marginRight: '0.5rem' }} /> Login</Button>
               </Link>
               <Link to="/register">
-                <Button size="sm">Register</Button>
+                <Button size="sm"><FiUserPlus style={{ marginRight: '0.5rem' }} /> Register</Button>
               </Link>
             </>
           )}
@@ -72,7 +80,7 @@ export function Navbar() {
             fontSize: '1.25rem'
           }}
         >
-          ☰
+          {mobileMenuOpen ? <FiX /> : <FiMenu />}
         </button>
       </div>
 

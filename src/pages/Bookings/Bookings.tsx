@@ -3,6 +3,8 @@ import { Button } from '../../components/ui/Button';
 import { bookingService } from '../../services/booking.service';
 import type { Booking, Item } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
+import { alert } from '../../utils/sweetAlert';
+import { FiCalendar, FiMapPin, FiDollarSign, FiXCircle } from 'react-icons/fi';
 
 export function Bookings() {
   const { user } = useAuth();
@@ -30,18 +32,26 @@ export function Bookings() {
   };
 
   const handleCancelBooking = async (bookingId: string) => {
+    const isConfirmed = await alert.confirm({
+      title: 'Cancel Booking?',
+      text: 'Are you sure you want to cancel this booking?',
+      confirmButtonText: 'Yes, Cancel',
+      cancelButtonText: 'No'
+    });
+    
+    if (!isConfirmed) return;
+    
     const reason = prompt('Please provide a reason for cancellation (optional):');
-    if (!confirm('Are you sure you want to cancel this booking?')) return;
 
     try {
       setProcessing(bookingId);
       const response = await bookingService.cancelBooking(bookingId, reason || undefined);
       if (response.success) {
-        alert(`Booking cancelled successfully! Refund amount: ৳${response.data.refundAmount}`);
+        await alert.success('Booking Cancelled!', `Refund amount: ৳${response.data.refundAmount}`);
         fetchBookings();
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to cancel booking');
+      await alert.error('Cancellation Failed', err.response?.data?.message || 'Failed to cancel booking');
     } finally {
       setProcessing(null);
     }

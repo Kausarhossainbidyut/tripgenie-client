@@ -5,6 +5,9 @@ import { dashboardService } from '../../services/dashboard.service';
 import { userService } from '../../services/user.service';
 import type { DashboardStats, DashboardChartData, User } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
+import { AdminItemsManagement } from '../Admin/ItemsManagement';
+import { alert } from '../../utils/sweetAlert';
+import { FiUsers, FiCalendar, FiMapPin, FiDollarSign, FiBarChart2, FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -181,7 +184,7 @@ export function AdminDashboard() {
       {activeMenu === 'overview' && <OverviewSection stats={stats} chartData={chartData} />}
       {activeMenu === 'users' && <UsersSection users={users} user={user} onRefresh={fetchUsers} />}
       {activeMenu === 'bookings' && <BookingsSection />}
-      {activeMenu === 'items' && <ItemsSection />}
+      {activeMenu === 'items' && <AdminItemsManagement />}
       {activeMenu === 'revenue' && <RevenueSection stats={stats} chartData={chartData} />}
     </div>
   );
@@ -246,13 +249,18 @@ function UsersSection({ users, user, onRefresh }: { users: User[]; user: User | 
   const handleRoleChange = async (userId: string, newRole: 'user' | 'admin') => {
     // Prevent admin from changing their own role
     if (userId === user?._id) {
-      alert('You cannot change your own role. Please ask another admin to do this.');
+      alert.warning('Cannot Change Own Role', 'You cannot change your own role. Please ask another admin to do this.');
       return;
     }
 
-    if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
-      return;
-    }
+    const isConfirmed = await alert.confirm({
+      title: 'Change User Role?',
+      text: `Are you sure you want to change this user's role to ${newRole}?`,
+      confirmButtonText: 'Yes, Change',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!isConfirmed) return;
 
     console.log('Changing role for user:', userId, 'to:', newRole);
     
@@ -262,34 +270,33 @@ function UsersSection({ users, user, onRefresh }: { users: User[]; user: User | 
       console.log('Response:', response);
       
       if (response.success) {
-        alert(`User role changed to ${newRole} successfully!`);
+        alert.success('Role Updated!', `User role has been changed to ${newRole} successfully!`);
         onRefresh();
       } else {
-        alert(response.message || 'Failed to update user role');
+        alert.error('Update Failed', response.message || 'Failed to update user role');
       }
     } catch (err: any) {
       console.error('Role change error:', err);
-      alert(err.response?.data?.message || err.message || 'Failed to update user role');
+      alert.error('Update Failed', err.response?.data?.message || err.message || 'Failed to update user role');
     } finally {
       setDeleteLoading(false);
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      return;
-    }
+    const isConfirmed = await alert.deleteConfirm('this user');
+    if (!isConfirmed) return;
     
     try {
       setDeleteLoading(true);
       const response = await userService.deleteUser(userId);
       if (response.success) {
-        alert('User deleted successfully');
+        alert.success('User Deleted!', 'The user has been deleted successfully');
         setIsDeleteConfirmOpen(null);
         window.location.reload();
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete user');
+      alert.error('Delete Failed', err.response?.data?.message || 'Failed to delete user');
     } finally {
       setDeleteLoading(false);
     }

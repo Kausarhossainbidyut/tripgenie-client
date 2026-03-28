@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
+import { alert } from '../utils/sweetAlert';
+import { FiUserPlus, FiMail, FiLock, FiCheckCircle } from 'react-icons/fi';
 
 export function Register() {
   const navigate = useNavigate();
@@ -30,8 +32,7 @@ export function Register() {
     setIsLoading(true);
     try {
       await register(formData);
-      // After successful registration, redirect to login
-      alert('Registration successful! Please login with your credentials.');
+      await alert.success('Account Created!', 'Your TripGenie account has been created successfully. Please login to continue.');
       navigate('/login');
     } catch (error: any) {
       setErrors({ submit: error.message || 'Registration failed' });
@@ -44,6 +45,7 @@ export function Register() {
     <div style={{ maxWidth: '28rem', margin: '0 auto', padding: '3rem 1rem' }}>
       <div className="card">
         <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.5rem)', fontWeight: 700, textAlign: 'center', marginBottom: '1.5rem', color: '#111827' }}>
+          <FiUserPlus style={{ display: 'inline-block', marginRight: '0.5rem', verticalAlign: 'middle' }} />
           Create Your TripGenie Account
         </h1>
 
@@ -79,7 +81,7 @@ export function Register() {
           )}
 
           <Button type="submit" style={{ width: '100%' }} isLoading={isLoading}>
-            Create Account
+            <FiUserPlus style={{ marginRight: '0.5rem' }} /> Create Account
           </Button>
         </form>
 

@@ -4,6 +4,8 @@ import { Button } from '../../components/ui/Button';
 import { wishlistService } from '../../services/wishlist.service';
 import { bookingService } from '../../services/booking.service';
 import type { WishlistItem, Item } from '../../types';
+import { alert } from '../../utils/sweetAlert';
+import { FiHeart, FiTrash2, FiShoppingCart, FiMapPin, FiDollarSign } from 'react-icons/fi';
 
 export function Wishlist() {
   const navigate = useNavigate();
@@ -31,17 +33,24 @@ export function Wishlist() {
   };
 
   const handleRemoveFromWishlist = async (wishlistId: string) => {
-    if (!confirm('Remove this item from your wishlist?')) return;
+    const isConfirmed = await alert.confirm({
+      title: 'Remove from Wishlist?',
+      text: 'Are you sure you want to remove this item from your wishlist?',
+      confirmButtonText: 'Yes, Remove',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!isConfirmed) return;
 
     try {
       setProcessing(wishlistId);
       const response = await wishlistService.removeFromWishlist(wishlistId);
       if (response.success) {
-        alert('Removed from wishlist!');
+        await alert.info('Removed from Wishlist', 'This item has been removed from your wishlist');
         fetchWishlist();
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to remove from wishlist');
+      await alert.error('Removal Failed', err.response?.data?.message || 'Failed to remove from wishlist');
     } finally {
       setProcessing(null);
     }
@@ -50,13 +59,17 @@ export function Wishlist() {
   const handleBookNow = async (itemId: string) => {
     try {
       setProcessing(itemId);
-      const response = await bookingService.createBooking({ itemId, quantity: 1 });
+      const response = await bookingService.createBooking({
+        itemId,
+        quantity: 1,
+      });
+
       if (response.success) {
-        alert('Booking created successfully! Check your bookings.');
+        await alert.success('Booking Created!', 'Your destination has been booked successfully!');
         navigate('/bookings');
       }
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to create booking');
+      await alert.error('Booking Failed', err.response?.data?.message || 'Failed to create booking');
     } finally {
       setProcessing(null);
     }
@@ -78,8 +91,8 @@ export function Wishlist() {
 
   return (
     <div style={{ padding: '1rem' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: '1.5rem' }}>
-        My Wishlist ❤️
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <FiHeart size={28} color="#ef4444" /> My Wishlist
       </h1>
 
       {error && (
@@ -100,7 +113,7 @@ export function Wishlist() {
             Your wishlist is empty
           </p>
           <Button onClick={() => navigate('/items')}>
-            Browse Destinations
+            <FiMapPin style={{ marginRight: '0.5rem' }} /> Browse Destinations
           </Button>
         </div>
       ) : (
@@ -127,8 +140,8 @@ export function Wishlist() {
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827', marginBottom: '0.5rem' }}>
                     {wishlistItem.title}
                   </h3>
-                  <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                    📍 {wishlistItem.location}
+                  <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <FiMapPin size={14} /> {wishlistItem.location}
                   </p>
                   <div style={{ 
                     display: 'flex', 
@@ -136,8 +149,8 @@ export function Wishlist() {
                     alignItems: 'center',
                     marginTop: '1rem'
                   }}>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>
-                      ৳{wishlistItem.price}
+                    <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <FiDollarSign size={20} />{wishlistItem.price}
                     </span>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <Button
@@ -145,7 +158,7 @@ export function Wishlist() {
                         onClick={() => handleBookNow(wishlistItem._id!)}
                         isLoading={processing === wishlistItem._id}
                       >
-                        Book Now
+                        <FiShoppingCart size={16} style={{ marginRight: '0.25rem' }} /> Book Now
                       </Button>
                       <Button
                         variant="outline"
@@ -154,7 +167,7 @@ export function Wishlist() {
                         isLoading={processing === item._id}
                         style={{ color: '#ef4444', borderColor: '#ef4444' }}
                       >
-                        Remove
+                        <FiTrash2 size={16} style={{ marginRight: '0.25rem' }} /> Remove
                       </Button>
                     </div>
                   </div>

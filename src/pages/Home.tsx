@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { APP_NAME } from '../constants';
+import { FiGlobe, FiMessageSquare, FiHeart, FiStar, FiMapPin, FiNavigation } from 'react-icons/fi';
 
 export function Home() {
   return (
@@ -30,13 +31,13 @@ export function Home() {
         justifyContent: 'center'
       }}>
         <Link to="/items">
-          <Button size="lg">Explore Destinations</Button>
+          <Button size="lg"><FiMapPin style={{ marginRight: '0.5rem' }} /> Explore Destinations</Button>
         </Link>
         <Link to="/ai-chat">
-          <Button variant="outline" size="lg">🤖 Ask AI Assistant</Button>
+          <Button variant="outline" size="lg"><FiMessageSquare style={{ marginRight: '0.5rem' }} /> Ask AI Assistant</Button>
         </Link>
         <Link to="/register">
-          <Button variant="outline" size="lg">Get Started</Button>
+          <Button variant="outline" size="lg"><FiGlobe style={{ marginRight: '0.5rem' }} /> Get Started</Button>
         </Link>
       </div>
 
@@ -51,19 +52,23 @@ export function Home() {
         padding: '0 1rem'
       }}>
         <FeatureCard
-          title="🌍 Explore Destinations"
+          icon={<FiMapPin size={32} color="#3b82f6" />}
+          title="Explore Destinations"
           description="Discover amazing places around Bangladesh and beyond. From beaches to mountains, find your perfect getaway."
         />
         <FeatureCard
-          title="🤖 AI-Powered Recommendations"
+          icon={<FiMessageSquare size={32} color="#10b981" />}
+          title="AI-Powered Recommendations"
           description="Get personalized travel suggestions based on your preferences and budget with our AI assistant."
         />
         <FeatureCard
-          title="❤️ Wishlist & Booking"
+          icon={<FiHeart size={32} color="#ef4444" />}
+          title="Wishlist & Booking"
           description="Save your favorite destinations and book them instantly. Manage all your trips in one place."
         />
         <FeatureCard
-          title="⭐ Reviews & Ratings"
+          icon={<FiStar size={32} color="#f59e0b" />}
+          title="Reviews & Ratings"
           description="Read honest reviews from other travelers and make informed decisions about your trips."
         />
       </div>
@@ -117,9 +122,10 @@ export function Home() {
   );
 }
 
-function FeatureCard({ title, description }: { title: string; description: string }) {
+function FeatureCard({ icon, title, description }: { icon?: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="card">
+    <div className="card" style={{ textAlign: 'center', padding: '1.5rem' }}>
+      {icon && <div style={{ marginBottom: '1rem', display: 'inline-block' }}>{icon}</div>}
       <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem', color: '#111827' }}>{title}</h3>
       <p style={{ color: '#6b7280' }}>{description}</p>
     </div>
