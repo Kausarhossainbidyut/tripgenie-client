@@ -4,7 +4,7 @@ import { bookingService } from '../../services/booking.service';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { alert } from '../../utils/sweetAlert';
 import type { Booking } from '../../types';
-import { FiCalendar, FiDollarSign, FiCheckCircle, FiClock, FiTrash2, FiEye, FiX } from 'react-icons/fi';
+import { FiCalendar, FiDollarSign, FiCheckCircle, FiClock, FiEye, FiX, FiPhone, FiMail, FiMapPin, FiTrash2 } from 'react-icons/fi';
 
 export function SimpleBookingsSection() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -241,6 +241,7 @@ function SimpleBookingRow({ booking, onStatusChange }: any) {
   const [confirmText, setConfirmText] = useState('');
   const [newStatus, setNewStatus] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   
   const item = booking.itemId || {};
   const user = booking.userId || {};
@@ -338,22 +339,92 @@ function SimpleBookingRow({ booking, onStatusChange }: any) {
           </select>
         </td>
         <td style={{ padding: '1rem' }}>
-          <button
-            style={{
-              padding: '0.375rem 0.75rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '0.375rem',
-              backgroundColor: 'white',
-              color: '#374151',
-              cursor: 'pointer',
-              fontSize: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.25rem'
-            }}
-          >
-            <FiEye size={14} /> View
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={() => setShowDetailsModal(true)}
+              style={{
+                padding: '0.375rem 0.75rem',
+                border: '1px solid #3b82f6',
+                borderRadius: '0.375rem',
+                backgroundColor: '#eff6ff',
+                color: '#3b82f6',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#dbeafe';
+                e.currentTarget.style.borderColor = '#2563eb';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#eff6ff';
+                e.currentTarget.style.borderColor = '#3b82f6';
+              }}
+            >
+              <FiEye size={14} /> View
+            </button>
+            
+            <button
+              onClick={async () => {
+                const isConfirmed = await alert.confirm({
+                  title: 'Delete Booking',
+                  text: `Are you sure you want to delete this booking? This action cannot be undone.`,
+                  confirmButtonText: 'Yes, Delete',
+                  cancelButtonText: 'Cancel'
+                });
+                
+                if (isConfirmed) {
+                  try {
+                    setUpdating(true);
+                    const response = await bookingService.deleteBooking(booking._id);
+                    if (response.success) {
+                      await alert.success('Deleted!', 'Booking has been deleted successfully');
+                      // Refresh the bookings list
+                      window.location.reload();
+                    }
+                  } catch (error: any) {
+                    await alert.error('Delete Failed', error.message || 'Failed to delete booking');
+                  } finally {
+                    setUpdating(false);
+                  }
+                }
+              }}
+              disabled={updating}
+              style={{
+                padding: '0.375rem 0.75rem',
+                border: '1px solid #dc2626',
+                borderRadius: '0.375rem',
+                backgroundColor: '#fee2e2',
+                color: '#dc2626',
+                cursor: updating ? 'not-allowed' : 'pointer',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'all 0.2s',
+                opacity: updating ? 0.5 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (!updating) {
+                  e.currentTarget.style.backgroundColor = '#fecaca';
+                  e.currentTarget.style.borderColor = '#b91c1c';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!updating) {
+                  e.currentTarget.style.backgroundColor = '#fee2e2';
+                  e.currentTarget.style.borderColor = '#dc2626';
+                }
+              }}
+            >
+              <FiTrash2 size={14} /> {updating ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
         </td>
       </tr>
 
@@ -514,6 +585,319 @@ function SimpleBookingRow({ booking, onStatusChange }: any) {
           </div>
         </div>
       )}
+
+      {/* Booking Details Modal */}
+      {showDetailsModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }} onClick={() => setShowDetailsModal(false)}>
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '1rem',
+              maxWidth: '700px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              padding: '1.5rem',
+              borderRadius: '1rem 1rem 0 0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'white', margin: 0 }}>
+                📋 Booking Details
+              </h3>
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '2.5rem',
+                  height: '2.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                }}
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{ padding: '1.5rem' }}>
+              {/* Status Badge */}
+              <div style={{
+                padding: '0.75rem 1rem',
+                borderRadius: '0.5rem',
+                backgroundColor: booking.status === 'pending' ? '#fef3c7' : 
+                               booking.status === 'confirmed' ? '#d1fae5' : '#fee2e2',
+                border: `1px solid ${booking.status === 'pending' ? '#fbbf24' : 
+                                       booking.status === 'confirmed' ? '#34d399' : '#f87171'}`,
+                marginBottom: '1.5rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontWeight: 700,
+                fontSize: '1rem',
+                textTransform: 'capitalize',
+                color: booking.status === 'pending' ? '#92400e' : 
+                       booking.status === 'confirmed' ? '#065f46' : '#991b1b'
+              }}>
+                {booking.status === 'pending' && '⏳'}
+                {booking.status === 'confirmed' && '✅'}
+                {booking.status === 'cancelled' && '❌'}
+                {booking.status}
+              </div>
+
+              {/* Booking Information Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+                <InfoBlock label="Booking ID" value={`#${booking._id?.slice(-8) || 'N/A'}`} monospace />
+                <InfoBlock label="Booking Date" value={new Date(booking.createdAt).toLocaleString('en-US', {
+                  month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                })} />
+                <InfoBlock label="Quantity" value={booking.quantity?.toString() || 'N/A'} />
+                <InfoBlock label="Total Price" value={`৳${booking.totalPrice?.toLocaleString() || '0'}`} bold color="#10b981" />
+              </div>
+
+              {/* User Information */}
+              <div className="card" style={{ marginBottom: '1rem', padding: '1.25rem', background: '#f9fafb' }}>
+                <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#6b7280', marginBottom: '1rem', textTransform: 'uppercase' }}>
+                  👤 User Information
+                </h4>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
+                  {user.avatar ? (
+                    <img 
+                      src={user.avatar} 
+                      alt={user.name}
+                      style={{ width: '56px', height: '56px', borderRadius: '50%' }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontSize: '1.5rem',
+                      fontWeight: 700
+                    }}>
+                      {user.name?.charAt(0) || 'U'}
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#111827', fontSize: '1.125rem' }}>
+                      {user.name || 'Unknown'}
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      {user.email || 'N/A'}
+                    </div>
+                  </div>
+                </div>
+                {user.phone && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                    <FiPhone size={16} />
+                    {user.phone}
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                  <FiMail size={16} />
+                  {user.email || 'N/A'}
+                </div>
+              </div>
+
+              {/* Destination Information */}
+              <div className="card" style={{ marginBottom: '1rem', padding: '1.25rem', background: '#f9fafb' }}>
+                <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#6b7280', marginBottom: '1rem', textTransform: 'uppercase' }}>
+                  🌍 Destination Details
+                </h4>
+                {item.image && (
+                  <img 
+                    src={item.image} 
+                    alt={item.title}
+                    style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '0.5rem', marginBottom: '1rem' }}
+                  />
+                )}
+                <div style={{ fontWeight: 700, color: '#111827', fontSize: '1.125rem', marginBottom: '0.5rem' }}>
+                  {item.title || 'N/A'}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.75rem' }}>
+                  <FiMapPin size={16} />
+                  {item.location || 'N/A'}
+                </div>
+                {item.price && (
+                  <div style={{ fontWeight: 700, color: '#10b981', fontSize: '1.25rem' }}>
+                    ৳{item.price.toLocaleString()} per person
+                  </div>
+                )}
+              </div>
+
+              {/* Booking Timeline */}
+              <div className="card" style={{ marginBottom: '1rem', padding: '1.25rem', background: '#f9fafb' }}>
+                <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#6b7280', marginBottom: '1rem', textTransform: 'uppercase' }}>
+                  📅 Booking Timeline
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+                  <TimelineItem 
+                    icon="🕒"
+                    label="Created At"
+                    value={new Date(booking.createdAt).toLocaleString('en-US', {
+                      month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })}
+                  />
+                  <TimelineItem 
+                    icon="✏️"
+                    label="Last Updated"
+                    value={booking.updatedAt ? new Date(booking.updatedAt).toLocaleString('en-US', {
+                      month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                    }) : 'Not updated'}
+                  />
+                </div>
+              </div>
+
+              {/* Cancellation Reason (if cancelled) */}
+              {booking.status === 'cancelled' && (
+                <div style={{
+                  padding: '1rem',
+                  borderRadius: '0.5rem',
+                  backgroundColor: '#fee2e2',
+                  border: '1px solid #f87171',
+                  marginBottom: '1rem'
+                }}>
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#991b1b', marginBottom: '0.5rem' }}>
+                    ❌ Cancellation Information
+                  </h4>
+                  <p style={{ fontSize: '0.875rem', color: '#991b1b', margin: 0 }}>
+                    {booking.cancellationReason || 'No reason provided'}
+                  </p>
+                </div>
+              )}
+
+              {/* Payment Information */}
+              {booking.paymentStatus && (
+                <div className="card" style={{ padding: '1.25rem', background: '#f0fdf4', border: '1px solid #86efac' }}>
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#166534', marginBottom: '0.75rem', textTransform: 'uppercase' }}>
+                    💳 Payment Status
+                  </h4>
+                  <div style={{
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem',
+                    backgroundColor: booking.paymentStatus === 'paid' ? '#d1fae5' : 
+                                   booking.paymentStatus === 'pending' ? '#fef3c7' : '#fee2e2',
+                    border: `1px solid ${booking.paymentStatus === 'paid' ? '#34d399' : 
+                                           booking.paymentStatus === 'pending' ? '#fbbf24' : '#f87171'}`,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    textTransform: 'capitalize',
+                    color: booking.paymentStatus === 'paid' ? '#065f46' : 
+                           booking.paymentStatus === 'pending' ? '#92400e' : '#991b1b'
+                  }}>
+                    {booking.paymentStatus === 'paid' && '💵'}
+                    {booking.paymentStatus === 'pending' && '⏳'}
+                    {booking.paymentStatus === 'failed' && '❌'}
+                    {booking.paymentStatus}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    backgroundColor: 'white',
+                    color: '#374151',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
+  );
+}
+
+// Info Block Component
+function InfoBlock({ label, value, monospace, bold, color }: any) {
+  return (
+    <div style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+      <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem', fontWeight: 600 }}>
+        {label}
+      </div>
+      <div style={{ 
+        fontSize: '0.875rem', 
+        color: color || '#1f2937', 
+        fontWeight: bold ? 700 : 400,
+        fontFamily: monospace ? 'monospace' : 'inherit'
+      }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+// Timeline Item Component
+function TimelineItem({ icon, label, value }: any) {
+  return (
+    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+      <div style={{ fontSize: '1.25rem' }}>{icon}</div>
+      <div>
+        <div style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 600, marginBottom: '0.25rem' }}>
+          {label}
+        </div>
+        <div style={{ fontSize: '0.875rem', color: '#1f2937' }}>
+          {value}
+        </div>
+      </div>
+    </div>
   );
 }
