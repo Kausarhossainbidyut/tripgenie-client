@@ -24,7 +24,7 @@ export const bookingService = {
   /**
    * Get all bookings with advanced filters
    */
-  getAllBookings: async (filters?: BookingFilters): Promise<ApiResponse<{ bookings: Booking[]; total: number; page: number; totalPages: number }>> => {
+  getAllBookings: async (filters?: BookingFilters): Promise<ApiResponse<Booking[] | { bookings: Booking[]; total: number; page: number; totalPages: number }>> => {
     const params = new URLSearchParams();
     if (filters?.status) params.append('status', filters.status);
     if (filters?.paymentStatus) params.append('paymentStatus', filters.paymentStatus);
@@ -34,7 +34,7 @@ export const bookingService = {
     if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.limit) params.append('limit', filters.limit.toString());
 
-    const response = await api.get<ApiResponse<{ bookings: Booking[]; total: number; page: number; totalPages: number }>>(`/bookings?${params.toString()}`);
+    const response = await api.get<ApiResponse<Booking[] | { bookings: Booking[]; total: number; page: number; totalPages: number }>>(`/bookings?${params.toString()}`);
     return response.data;
   },
 

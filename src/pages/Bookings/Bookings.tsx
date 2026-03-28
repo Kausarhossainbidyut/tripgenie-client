@@ -87,7 +87,9 @@ export function Bookings() {
       setLoading(true);
       const response = await bookingService.getAllBookings();
       if (response.success) {
-        setBookings(response.data);
+        // Handle both array and object responses
+        const bookingsData = Array.isArray(response.data) ? response.data : (response.data as any).bookings || [];
+        setBookings(bookingsData);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch bookings');
