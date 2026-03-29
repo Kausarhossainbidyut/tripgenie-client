@@ -7,7 +7,8 @@ import { alert } from '../../utils/sweetAlert';
 import type { Booking } from '../../types';
 import { 
   FiUsers, FiCalendar, FiMapPin, FiDollarSign, FiCheckCircle, FiClock, FiX, 
-  FiEye, FiTrash2, FiPhone, FiMail, FiFilter, FiSearch
+  FiEye, FiTrash2, FiPhone, FiMail, FiFilter, FiSearch, FiChevronUp, FiChevronDown,
+  FiStar, FiTrendingUp
 } from 'react-icons/fi';
 
 export function EnhancedBookingsSection() {
@@ -243,7 +244,7 @@ export function EnhancedBookingsSection() {
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <FiFilter /> Advanced Filters
           </span>
-          {showFilters ? <FiChevronUp /> : <FiChevronDown />}
+          {showFilters ? <FiChevronUp style={{ width: '20px', height: '20px' }} /> : <FiChevronDown style={{ width: '20px', height: '20px' }} />}
         </button>
         
         {showFilters && (
@@ -324,8 +325,7 @@ export function EnhancedBookingsSection() {
             left: '1rem',
             top: '50%',
             transform: 'translateY(-50%)',
-            color: '#9ca3af',
-            size: 20
+            color: '#9ca3af'
           }} />
           <input
             type="text"
@@ -453,7 +453,7 @@ function AnalyticsCard({ title, value, icon, gradient, trend }: any) {
             borderRadius: '0.5rem',
             backdropFilter: 'blur(10px)'
           }}>
-            <FiTrendingUp size={12} style={{ marginRight: '0.25rem' }} />
+            <FiTrendingUp style={{ width: '12px', height: '12px', marginRight: '0.25rem' }} />
             {trend}
           </div>
         )}
@@ -593,7 +593,7 @@ function EnhancedBookingRow({ booking, index, isSelected, onToggleSelect }: any)
           </div>
           {item.rating && (
             <div style={{ fontSize: '0.75rem', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <FiStar size={12} fill="#f59e0b" /> {item.rating} ({item.reviews || 0} reviews)
+              <FiStar style={{ width: '12px', height: '12px', fill: '#f59e0b' }} /> {item.rating} ({item.reviews || 0} reviews)
             </div>
           )}
         </td>

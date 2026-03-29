@@ -86,12 +86,21 @@ export function Bookings() {
     try {
       setLoading(true);
       const response = await bookingService.getAllBookings();
+      console.log('📋 Bookings API Response:', response);
+      
       if (response.success) {
         // Handle both array and object responses
         const bookingsData = Array.isArray(response.data) ? response.data : (response.data as any).bookings || [];
         setBookings(bookingsData);
+        console.log('✅ Bookings data set:', bookingsData);
+        console.log('📊 Number of bookings:', bookingsData.length);
+        if (bookingsData.length > 0) {
+          console.log('🔍 First booking structure:', JSON.stringify(bookingsData[0], null, 2));
+        }
       }
     } catch (err: any) {
+      console.error('❌ Bookings fetch error:', err);
+      console.error('Error details:', err.response?.data);
       setError(err.message || 'Failed to fetch bookings');
     } finally {
       setLoading(false);
