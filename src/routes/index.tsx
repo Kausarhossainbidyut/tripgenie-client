@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Home, Login, Register, Dashboard } from '../pages';
+import { Home, Login, Register, Dashboard, Contact, FAQ, TermsOfService, PrivacyPolicy, HelpCenter, RefundPolicy } from '../pages';
 import { Items } from '../pages/Items/Items';
 import { ItemDetail } from '../pages/Items/ItemDetail';
 import { Reviews } from '../pages/Reviews/Reviews';
@@ -54,6 +54,12 @@ export function AppRoutes() {
         }
       />
       <Route path="/ai-chat" element={<AIChat />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/faq" element={<FAQ />} />
+      <Route path="/terms" element={<TermsOfService />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/help" element={<HelpCenter />} />
+      <Route path="/refund" element={<RefundPolicy />} />
       <Route
         path="/dashboard"
         element={
