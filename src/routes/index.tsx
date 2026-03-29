@@ -7,6 +7,7 @@ import { Reviews } from '../pages/Reviews/Reviews';
 import { Wishlist } from '../pages/Wishlist/Wishlist';
 import { Bookings } from '../pages/Bookings/Bookings';
 import { AIChat } from '../pages/AIChat/AIChat';
+import { AdminDashboard } from '../pages/Dashboard/AdminDashboard';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -60,6 +61,7 @@ export function AppRoutes() {
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/help" element={<HelpCenter />} />
       <Route path="/refund" element={<RefundPolicy />} />
+      <Route path="/admin" element={<AdminDashboard />} />
       <Route
         path="/dashboard"
         element={
