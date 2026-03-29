@@ -59,9 +59,8 @@ export function Bookings() {
               // Check if it's a 404 error (item deleted) - don't log as error
               const isNotFound = result.reason?.response?.status === 404;
               if (!isNotFound) {
-                console.error(`Failed to fetch item ${itemIdsToFetch[index]}:`, result.reason.message);
+                // Silently ignore non-404 errors
               }
-              // For 404s, just skip - item was deleted, which is normal
             }
           });
           
@@ -71,7 +70,7 @@ export function Bookings() {
           // But if it does, only log if it's not a 404
           const isNotFound = err?.response?.status === 404;
           if (!isNotFound) {
-            console.error('Error fetching items:', err.message);
+            // Silently ignore non-404 errors
           }
         }
       }
@@ -86,21 +85,13 @@ export function Bookings() {
     try {
       setLoading(true);
       const response = await bookingService.getAllBookings();
-      console.log('📋 Bookings API Response:', response);
       
       if (response.success) {
         // Handle both array and object responses
         const bookingsData = Array.isArray(response.data) ? response.data : (response.data as any).bookings || [];
         setBookings(bookingsData);
-        console.log('✅ Bookings data set:', bookingsData);
-        console.log('📊 Number of bookings:', bookingsData.length);
-        if (bookingsData.length > 0) {
-          console.log('🔍 First booking structure:', JSON.stringify(bookingsData[0], null, 2));
-        }
       }
     } catch (err: any) {
-      console.error('❌ Bookings fetch error:', err);
-      console.error('Error details:', err.response?.data);
       setError(err.message || 'Failed to fetch bookings');
     } finally {
       setLoading(false);

@@ -22,19 +22,11 @@ export function Wishlist() {
     try {
       setLoading(true);
       const response = await wishlistService.getWishlist();
-      console.log('📋 Wishlist API Response:', response);
       
       if (response.success) {
         setWishlist(response.data);
-        console.log('✅ Wishlist data set:', response.data);
-        console.log('📊 Number of items:', response.data.length);
-        if (response.data.length > 0) {
-          console.log('🔍 First item structure:', JSON.stringify(response.data[0], null, 2));
-        }
       }
     } catch (err: any) {
-      console.error('❌ Wishlist fetch error:', err);
-      console.error('Error details:', err.response?.data);
       setError(err.message || 'Failed to fetch wishlist');
     } finally {
       setLoading(false);
