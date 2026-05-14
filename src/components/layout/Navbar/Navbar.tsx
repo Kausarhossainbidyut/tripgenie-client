@@ -1,645 +1,471 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../../hooks/useAuth';
-import { Button } from '../../ui/Button';
 import { APP_NAME } from '../../../constants';
-import { 
-  FiGlobe, FiMapPin, FiMessageSquare, FiHeart, FiCalendar, 
-  FiUser, FiLogOut, FiMenu, FiX, FiLogIn, FiUserPlus, 
-  FiChevronDown, FiShield, FiHelpCircle 
+import {
+  FiGlobe, FiMapPin, FiMessageSquare, FiHeart, FiCalendar,
+  FiLogOut, FiMenu, FiX, FiLogIn, FiUserPlus,
+  FiShield, FiHelpCircle, FiChevronDown, FiGrid, FiUser
 } from 'react-icons/fi';
+
+/* ── Variants ── */
+const dropdownV = {
+  hidden:  { opacity: 0, y: -10, scale: 0.95 },
+  visible: { opacity: 1, y: 0,   scale: 1, transition: { duration: 0.2, ease: [0.16,1,0.3,1] } },
+  exit:    { opacity: 0, y: -8,  scale: 0.95, transition: { duration: 0.14 } },
+};
+const drawerV = {
+  hidden:  { x: '100%', opacity: 0 },
+  visible: { x: 0, opacity: 1, transition: { duration: 0.32, ease: [0.16,1,0.3,1] } },
+  exit:    { x: '100%', opacity: 0, transition: { duration: 0.22, ease: [0.4,0,1,1] } },
+};
+
+const AUTH_LINKS = [
+  { to: '/items',    icon: <FiMapPin size={15}/>,        label: 'Destinations' },
+  { to: '/ai-chat',  icon: <FiMessageSquare size={15}/>, label: 'AI Chat' },
+  { to: '/wishlist', icon: <FiHeart size={15}/>,         label: 'Wishlist' },
+  { to: '/bookings', icon: <FiCalendar size={15}/>,      label: 'Bookings' },
+];
+const GUEST_LINKS = [
+  { to: '/items',   icon: <FiMapPin size={15}/>,        label: 'Destinations' },
+  { to: '/ai-chat', icon: <FiMessageSquare size={15}/>, label: 'AI Chat' },
+  { to: '/help',    icon: <FiHelpCircle size={15}/>,    label: 'Help' },
+];
+
+/* ── Colour tokens ── */
+const C = {
+  teal:   '#0d9488',
+  tealLt: '#14b8a6',
+  tealDk: '#0f766e',
+  emerald:'#059669',
+  cyan:   '#06b6d4',
+  /* scrolled navbar surface */
+  navBg:  'rgba(255,255,255,0.92)',
+  navBdr: 'rgba(13,148,136,0.15)',
+  /* active link */
+  active: '#0d9488',
+  activeBg: 'rgba(13,148,136,0.09)',
+};
 
 export function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen,   setMobileOpen]   = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [scrolled,     setScrolled]     = useState(false);
   const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const fn = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', fn, { passive: true });
+    return () => window.removeEventListener('scroll', fn);
   }, []);
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [mobileMenuOpen]);
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
-  // Close menus when route changes
-  useEffect(() => {
-    setMobileMenuOpen(false);
-    setUserMenuOpen(false);
-  }, [location]);
+  useEffect(() => { setMobileOpen(false); setUserMenuOpen(false); }, [location]);
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (p: string) => location.pathname === p;
+  const links = isAuthenticated ? AUTH_LINKS : GUEST_LINKS;
+
+  /* text colour adapts: white on dark hero, dark on white bg */
+  const textCol  = scrolled ? '#1e293b' : 'rgba(255,255,255,0.92)';
+  const mutedCol = scrolled ? '#64748b' : 'rgba(255,255,255,0.65)';
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 ${
-      scrolled ? 'shadow-xl backdrop-blur-md bg-white/98 border-purple-100' : 'shadow-sm bg-white border-gray-200'
-    } border-b`} style={{ borderColor: scrolled ? '#e9d5ff' : '#e5e7eb' }}>
-      {/* Top notification bar */}
-      {scrolled && (
+    <>
+      {/* ── Fixed nav bar ── */}
+      <motion.nav
+        initial={{ y: -72, opacity: 0 }}
+        animate={{ y: 0,   opacity: 1 }}
+        transition={{ duration: 0.55, ease: [0.16,1,0.3,1] }}
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+          transition: 'background 0.35s, box-shadow 0.35s, border-color 0.35s',
+          background:   scrolled ? C.navBg  : 'transparent',
+          backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
+          WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
+          borderBottom: scrolled ? `1px solid ${C.navBdr}` : '1px solid transparent',
+          boxShadow:    scrolled ? '0 2px 20px rgba(0,0,0,0.07)' : 'none',
+        }}
+      >
+        {/* Teal accent line */}
+        {scrolled && (
+          <motion.div
+            initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
+            transition={{ duration: 0.5 }}
+            style={{
+              position: 'absolute', top: 0, left: 0, right: 0, height: '2.5px',
+              background: `linear-gradient(90deg, ${C.teal}, ${C.cyan}, ${C.emerald})`,
+              transformOrigin: 'left',
+            }}
+          />
+        )}
+
         <div style={{
-          height: '2px',
-          background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
-          width: '100%'
-        }} />
-      )}
-      
-      <div className="container flex h-16 items-center justify-between" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Logo */}
-        <Link to="/" style={{ 
-          fontSize: '1.5rem', 
-          fontWeight: 800, 
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          textDecoration: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          transition: 'transform 0.2s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.05)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-        }}
-        >
-          <FiGlobe style={{ 
-            display: 'inline-block',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }} />
-          {APP_NAME}
-        </Link>
+          maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem',
+          height: '68px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
 
-        {/* Desktop Menu */}
-        <div className="desktop-menu" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          {isAuthenticated ? (
-            <>
-              {/* Navigation Links */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <NavLink to="/items" icon={<FiMapPin size={16} />} label="Destinations" active={isActive('/items')} />
-                <NavLink to="/ai-chat" icon={<FiMessageSquare size={16} />} label="AI Chat" active={isActive('/ai-chat')} />
-                <NavLink to="/wishlist" icon={<FiHeart size={16} />} label="Wishlist" active={isActive('/wishlist')} />
-                <NavLink to="/bookings" icon={<FiCalendar size={16} />} label="Bookings" active={isActive('/bookings')} />
-                
-                {/* Help Dropdown */}
-                <Link to="/help" style={{ textDecoration: 'none' }}>
-                  <button
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      padding: '0.5rem',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      color: '#6b7280',
-                      transition: 'color 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#1f2937';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#6b7280';
-                    }}
-                  >
-                    <FiHelpCircle size={16} />
-                    Help
-                  </button>
-                </Link>
+          {/* ── Logo ── */}
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <div style={{
+                width: '38px', height: '38px', borderRadius: '11px',
+                background: `linear-gradient(135deg, ${C.teal}, ${C.cyan})`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: `0 4px 14px rgba(13,148,136,0.45)`,
+              }}>
+                <FiGlobe size={19} color="white" />
               </div>
+              <span style={{
+                fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em',
+                background: scrolled
+                  ? `linear-gradient(135deg, ${C.teal}, ${C.cyan})`
+                  : 'linear-gradient(135deg, #ffffff, #a7f3d0)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              }}>
+                {APP_NAME}
+              </span>
+            </motion.div>
+          </Link>
 
-              {/* User Profile Dropdown */}
+          {/* ── Desktop nav links ── */}
+          <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '0.125rem' }}>
+            {links.map((lk, i) => (
+              <motion.div key={lk.to}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06 + 0.1, duration: 0.3, ease: [0.16,1,0.3,1] }}
+              >
+                <NavPill to={lk.to} icon={lk.icon} label={lk.label}
+                  active={isActive(lk.to)} scrolled={scrolled}
+                  textCol={textCol} activeColor={C.active} activeBg={C.activeBg}
+                />
+              </motion.div>
+            ))}
+          </div>
+
+          {/* ── Desktop right ── */}
+          <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+            {isAuthenticated ? (
               <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                <motion.button
+                  whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.95 }}
+                  onClick={() => setUserMenuOpen(v => !v)}
                   style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '40px',
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                    boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.1)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.3rem 0.75rem 0.3rem 0.3rem',
+                    background: scrolled ? C.activeBg : 'rgba(255,255,255,0.12)',
+                    border: `1.5px solid ${scrolled ? C.navBdr : 'rgba(255,255,255,0.25)'}`,
+                    borderRadius: '9999px', cursor: 'pointer',
                   }}
                 >
-                  <FiUser size={20} />
-                </button>
-                
-                {userMenuOpen && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '100%',
-                      right: 0,
-                      background: 'white',
-                      borderRadius: '0.75rem',
-                      boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                      padding: '0.5rem',
-                      minWidth: '220px',
-                      marginTop: '0.5rem',
-                      border: '1px solid #e5e7eb',
-                      zIndex: 100
-                    }}
-                  >
-                    <div style={{ padding: '0.75rem', borderBottom: '1px solid #e5e7eb', marginBottom: '0.5rem' }}>
-                      <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1f2937', margin: 0 }}>{user?.name}</p>
-                      <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>{user?.email}</p>
-                    </div>
-                    <DropdownLink to="/dashboard" label="Dashboard" icon={<FiUser size={16} />} />
-                    {user?.role === 'admin' && (
-                      <DropdownLink to="/admin" label="Admin Panel" icon={<FiShield size={16} />} />
-                    )}
-                    <div style={{ height: '1px', background: '#e5e7eb', margin: '0.5rem 0' }} />
-                    <button
-                      onClick={logout}
+                  <div style={{
+                    width: '30px', height: '30px', borderRadius: '50%',
+                    background: `linear-gradient(135deg, ${C.teal}, ${C.cyan})`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'white', fontWeight: 700, fontSize: '0.8125rem',
+                  }}>
+                    {user?.name?.charAt(0).toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 600, color: textCol,
+                    maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user?.name?.split(' ')[0]}
+                  </span>
+                  <FiChevronDown size={13} color={mutedCol}
+                    style={{ transform: userMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+                  />
+                </motion.button>
+
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div variants={dropdownV} initial="hidden" animate="visible" exit="exit"
                       style={{
-                        width: '100%',
-                        background: 'none',
-                        border: 'none',
-                        padding: '0.625rem 0.75rem',
-                        textAlign: 'left',
-                        fontSize: '0.875rem',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        borderRadius: '0.375rem',
-                        transition: 'background 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#fef2f2';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'none';
+                        position: 'absolute', top: 'calc(100% + 10px)', right: 0,
+                        background: 'white', borderRadius: '16px', padding: '0.5rem',
+                        minWidth: '220px', zIndex: 200,
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.13), 0 0 0 1px rgba(0,0,0,0.04)',
                       }}
                     >
-                      <FiLogOut size={16} />
-                      Logout
-                    </button>
+                      <div style={{ padding: '0.75rem 1rem 0.625rem' }}>
+                        <p style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9375rem', margin: 0 }}>{user?.name}</p>
+                        <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '0.1rem 0 0' }}>{user?.email}</p>
+                      </div>
+                      <div style={{ height: '1px', background: '#f1f5f9', margin: '0 0.5rem 0.375rem' }} />
+                      <DDItem to="/dashboard" icon={<FiGrid size={15}/>}  label="Dashboard"  accent={C.teal} />
+                      {user?.role === 'admin' && (
+                        <DDItem to="/admin" icon={<FiShield size={15}/>} label="Admin Panel" accent={C.teal} />
+                      )}
+                      <div style={{ height: '1px', background: '#f1f5f9', margin: '0.375rem 0.5rem' }} />
+                      <button onClick={logout}
+                        style={{
+                          width: '100%', background: 'none', border: 'none',
+                          padding: '0.6rem 0.875rem', textAlign: 'left',
+                          fontSize: '0.875rem', color: '#ef4444', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: '0.6rem',
+                          borderRadius: '10px', fontWeight: 500, transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#fef2f2')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                      >
+                        <FiLogOut size={15}/> Sign out
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <>
+                <Link to="/login" style={{ textDecoration: 'none' }}>
+                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                    style={{
+                      padding: '0.5rem 1.125rem',
+                      background: 'transparent',
+                      border: `1.5px solid ${scrolled ? 'rgba(13,148,136,0.35)' : 'rgba(255,255,255,0.35)'}`,
+                      borderRadius: '10px', fontSize: '0.875rem', fontWeight: 600,
+                      color: textCol, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '0.375rem',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = scrolled ? C.activeBg : 'rgba(255,255,255,0.12)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <FiLogIn size={15}/> Sign in
+                  </motion.button>
+                </Link>
+                <Link to="/register" style={{ textDecoration: 'none' }}>
+                  <motion.button whileHover={{ scale: 1.04, y: -1 }} whileTap={{ scale: 0.96 }}
+                    style={{
+                      padding: '0.5rem 1.25rem',
+                      background: `linear-gradient(135deg, ${C.teal}, ${C.cyan})`,
+                      border: 'none', borderRadius: '10px',
+                      fontSize: '0.875rem', fontWeight: 700, color: 'white',
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '0.375rem',
+                      boxShadow: `0 4px 16px rgba(13,148,136,0.45)`,
+                      transition: 'box-shadow 0.2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 6px 22px rgba(13,148,136,0.6)`; }}
+                    onMouseLeave={e => { e.currentTarget.style.boxShadow = `0 4px 16px rgba(13,148,136,0.45)`; }}
+                  >
+                    <FiUserPlus size={15}/> Get Started
+                  </motion.button>
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* ── Mobile hamburger ── */}
+          <motion.button whileTap={{ scale: 0.88 }}
+            onClick={() => setMobileOpen(v => !v)}
+            className="show-mobile-only"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '42px', height: '42px',
+              background: scrolled ? C.activeBg : 'rgba(255,255,255,0.12)',
+              border: `1.5px solid ${scrolled ? C.navBdr : 'rgba(255,255,255,0.28)'}`,
+              borderRadius: '11px', cursor: 'pointer', color: textCol,
+            }}
+          >
+            {mobileOpen ? <FiX size={20}/> : <FiMenu size={20}/>}
+          </motion.button>
+        </div>
+      </motion.nav>
+
+      {/* ── Mobile drawer ── */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 998, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
+            />
+            <motion.div variants={drawerV} initial="hidden" animate="visible" exit="exit"
+              style={{
+                position: 'fixed', top: 0, right: 0, bottom: 0,
+                width: 'min(310px, 84vw)', background: 'white',
+                zIndex: 999, display: 'flex', flexDirection: 'column',
+                boxShadow: '-16px 0 48px rgba(0,0,0,0.18)', overflowY: 'auto',
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                padding: '1.25rem 1.5rem',
+                background: `linear-gradient(135deg, ${C.tealDk}, ${C.teal}, ${C.cyan})`,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <FiGlobe size={20} color="white"/>
+                  <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'white', letterSpacing: '-0.02em' }}>
+                    {APP_NAME}
+                  </span>
+                </div>
+                <button onClick={() => setMobileOpen(false)}
+                  style={{ background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '8px', padding: '0.375rem', color: 'white', cursor: 'pointer', display: 'flex' }}>
+                  <FiX size={18}/>
+                </button>
+              </div>
+
+              {/* User card */}
+              {isAuthenticated && (
+                <div style={{ margin: '1rem 1rem 0', padding: '1rem',
+                  background: `linear-gradient(135deg, rgba(13,148,136,0.07), rgba(6,182,212,0.07))`,
+                  borderRadius: '12px', border: `1px solid rgba(13,148,136,0.15)` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%',
+                      background: `linear-gradient(135deg, ${C.teal}, ${C.cyan})`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'white', fontWeight: 700, fontSize: '1rem' }}>
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9375rem', margin: 0 }}>{user?.name}</p>
+                      <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>{user?.email}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Links */}
+              <div style={{ padding: '1rem', flex: 1 }}>
+                <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem', paddingLeft: '0.5rem' }}>
+                  Navigation
+                </p>
+                {links.map((lk, i) => (
+                  <motion.div key={lk.to}
+                    initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 + 0.1 }}
+                  >
+                    <Link to={lk.to} style={{
+                      display: 'flex', alignItems: 'center', gap: '0.75rem',
+                      padding: '0.75rem 0.875rem', borderRadius: '10px',
+                      textDecoration: 'none', marginBottom: '0.2rem',
+                      color: isActive(lk.to) ? C.teal : '#374151',
+                      background: isActive(lk.to) ? C.activeBg : 'transparent',
+                      fontWeight: isActive(lk.to) ? 600 : 500, fontSize: '0.9375rem',
+                      transition: 'all 0.15s',
+                    }}>
+                      <span style={{ color: isActive(lk.to) ? C.teal : '#94a3b8' }}>{lk.icon}</span>
+                      {lk.label}
+                    </Link>
+                  </motion.div>
+                ))}
+
+                {isAuthenticated && (
+                  <>
+                    <div style={{ height: '1px', background: '#f1f5f9', margin: '0.75rem 0' }}/>
+                    <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem', paddingLeft: '0.5rem' }}>
+                      Account
+                    </p>
+                    <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 0.875rem', borderRadius: '10px', textDecoration: 'none', color: '#374151', fontWeight: 500, fontSize: '0.9375rem', marginBottom: '0.2rem' }}>
+                      <FiGrid size={15} color="#94a3b8"/> Dashboard
+                    </Link>
+                    {user?.role === 'admin' && (
+                      <Link to="/admin" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 0.875rem', borderRadius: '10px', textDecoration: 'none', color: '#374151', fontWeight: 500, fontSize: '0.9375rem', marginBottom: '0.2rem' }}>
+                        <FiShield size={15} color="#94a3b8"/> Admin Panel
+                      </Link>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Bottom */}
+              <div style={{ padding: '1rem', borderTop: '1px solid #f1f5f9' }}>
+                {isAuthenticated ? (
+                  <button onClick={() => { logout(); setMobileOpen(false); }}
+                    style={{ width: '100%', padding: '0.75rem', background: '#fef2f2', border: '1px solid #fecaca',
+                      borderRadius: '10px', color: '#ef4444', fontWeight: 600, fontSize: '0.9375rem',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <FiLogOut size={16}/> Sign out
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <Link to="/login" style={{ textDecoration: 'none' }}>
+                      <button style={{ width: '100%', padding: '0.75rem', background: 'transparent',
+                        border: `1.5px solid rgba(13,148,136,0.3)`, borderRadius: '10px', color: C.teal,
+                        fontWeight: 600, fontSize: '0.9375rem', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <FiLogIn size={16}/> Sign in
+                      </button>
+                    </Link>
+                    <Link to="/register" style={{ textDecoration: 'none' }}>
+                      <button style={{ width: '100%', padding: '0.75rem',
+                        background: `linear-gradient(135deg, ${C.teal}, ${C.cyan})`,
+                        border: 'none', borderRadius: '10px', color: 'white',
+                        fontWeight: 700, fontSize: '0.9375rem', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                        boxShadow: `0 4px 14px rgba(13,148,136,0.4)` }}>
+                        <FiUserPlus size={16}/> Get Started Free
+                      </button>
+                    </Link>
                   </div>
                 )}
               </div>
-            </>
-          ) : (
-            <>
-              {/* Guest Links */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <NavLink to="/items" icon={<FiMapPin size={16} />} label="Destinations" active={isActive('/items')} />
-                <NavLink to="/ai-chat" icon={<FiMessageSquare size={16} />} label="AI Chat" active={isActive('/ai-chat')} />
-                
-                {/* Help Link for Guests */}
-                <Link to="/help" style={{ textDecoration: 'none' }}>
-                  <button
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      padding: '0.5rem',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      color: '#6b7280',
-                      transition: 'color 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#1f2937';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#6b7280';
-                    }}
-                  >
-                    <FiHelpCircle size={16} />
-                    Help
-                  </button>
-                </Link>
-              </div>
-              
-              {/* Auth Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Link to="/login">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}
-                  >
-                    <FiLogIn size={16} /> Login
-                  </Button>
-                </Link>
-                <Link to="/register">
-                  <Button 
-                    size="sm"
-                    style={{
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      border: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
-                      transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
-                    }}
-                  >
-                    <FiUserPlus size={16} /> Register
-                  </Button>
-                </Link>
-              </div>
-            </>
-          )}
-        </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="mobile-menu-toggle"
-          style={{
-            display: 'none',
-            padding: '0.5rem',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            border: 'none',
-            borderRadius: '0.375rem',
-            cursor: 'pointer',
-            fontSize: '1.5rem',
-            color: 'white',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.1)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
-          }}
-        >
-          {mobileMenuOpen ? <FiX /> : <FiMenu />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="mobile-menu" style={{
-          display: 'none',
-          padding: '1.5rem',
-          borderTop: '1px solid #e5e7eb',
-          backgroundColor: 'white',
-          animation: 'slideDown 0.3s ease-out',
-          position: 'fixed',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 40,
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
-          maxHeight: 'calc(100vh - 64px)',
-          overflowY: 'auto'
-        }}>
-          {isAuthenticated ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {/* Close Button */}
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                style={{
-                  alignSelf: 'flex-end',
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  borderRadius: '0.375rem',
-                  padding: '0.5rem',
-                  color: '#ef4444',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '0.5rem',
-                  transition: 'background 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#fee2e2';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#fef2f2';
-                }}
-              >
-                <FiX size={20} />
-              </button>
-              
-              {/* User Info Card */}
-              <div style={{
-                padding: '1rem',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                borderRadius: '0.75rem',
-                color: 'white',
-                marginBottom: '0.5rem'
-              }}>
-                <p style={{ fontSize: '0.875rem', opacity: 0.9, margin: '0 0 0.25rem 0' }}>Welcome back,</p>
-                <p style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>{user?.name}</p>
-              </div>
-              
-              <MobileNavLink to="/items" label="Destinations" icon={<FiMapPin size={18} />} />
-              <MobileNavLink to="/ai-chat" label="AI Chat" icon={<FiMessageSquare size={18} />} />
-              <MobileNavLink to="/wishlist" label="Wishlist" icon={<FiHeart size={18} />} />
-              <MobileNavLink to="/bookings" label="Bookings" icon={<FiCalendar size={18} />} />
-              
-              <div style={{ paddingTop: '0.75rem', marginTop: '0.75rem', borderTop: '1px solid #e5e7eb' }}>
-                <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Support</p>
-                <MobileNavLink to="/faq" label="FAQs" icon={<FiHelpCircle size={18} />} />
-                <MobileNavLink to="/contact" label="Contact Us" icon={<FiMessageSquare size={18} />} />
-                <MobileNavLink to="/help" label="Help Center" icon={<FiHelpCircle size={18} />} />
-              </div>
-              
-              <div style={{ paddingTop: '0.75rem', marginTop: '0.75rem', borderTop: '1px solid #e5e7eb' }}>
-                <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" size="sm" style={{ width: '100%', justifyContent: 'center' }}>
-                    Dashboard
-                  </Button>
-                </Link>
-                {user?.role === 'admin' && (
-                  <Link to="/admin" onClick={() => setMobileMenuOpen(false)} style={{ display: 'block', marginTop: '0.5rem' }}>
-                    <Button variant="ghost" size="sm" style={{ width: '100%', justifyContent: 'center' }}>
-                      🔐 Admin Panel
-                    </Button>
-                  </Link>
-                )}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => { logout(); setMobileMenuOpen(false); }} 
-                  style={{ width: '100%', marginTop: '0.75rem', borderColor: '#ef4444', color: '#ef4444' }}
-                >
-                  <FiLogOut style={{ marginRight: '0.5rem' }} /> Logout
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {/* Close Button */}
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                style={{
-                  alignSelf: 'flex-end',
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  borderRadius: '0.375rem',
-                  padding: '0.5rem',
-                  color: '#ef4444',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '0.5rem',
-                  transition: 'background 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#fee2e2';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#fef2f2';
-                }}
-              >
-                <FiX size={20} />
-              </button>
-              
-              <MobileNavLink to="/items" label="Destinations" icon={<FiMapPin size={18} />} />
-              <MobileNavLink to="/ai-chat" label="AI Chat" icon={<FiMessageSquare size={18} />} />
-              
-              <div style={{ paddingTop: '0.75rem', marginTop: '0.75rem', borderTop: '1px solid #e5e7eb' }}>
-                <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Support</p>
-                <MobileNavLink to="/faq" label="FAQs" icon={<FiHelpCircle size={18} />} />
-                <MobileNavLink to="/contact" label="Contact Us" icon={<FiMessageSquare size={18} />} />
-                <MobileNavLink to="/help" label="Help Center" icon={<FiHelpCircle size={18} />} />
-              </div>
-              
-              <div style={{ paddingTop: '0.75rem', marginTop: '0.75rem', borderTop: '1px solid #e5e7eb' }}>
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" size="sm" style={{ width: '100%', justifyContent: 'center' }}>Login</Button>
-                </Link>
-                <Link to="/register" onClick={() => setMobileMenuOpen(false)} style={{ display: 'block', marginTop: '0.5rem' }}>
-                  <Button 
-                    size="sm" 
-                    style={{ 
-                      width: '100%', 
-                      justifyContent: 'center',
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      border: 'none'
-                    }}
-                  >
-                    Register
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <style>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        /* Tablet - Medium screens */
-        @media (max-width: 1024px) and (min-width: 769px) {
-          .desktop-menu {
-            gap: 0.75rem !important;
-          }
-          .nav-link {
-            font-size: 0.8125rem !important;
-            padding: 0.375rem 0.5rem !important;
-          }
-          .help-dropdown {
-            right: -50px !important;
-          }
-        }
-        
-        /* Mobile - Small screens */
-        @media (max-width: 768px) {
-          .desktop-menu {
-            display: none !important;
-          }
-          .mobile-menu-toggle {
-            display: block !important;
-          }
-          .mobile-menu {
-            display: block !important;
-          }
-          .help-dropdown {
-            position: fixed !important;
-            left: 1rem !important;
-            right: 1rem !important;
-            top: auto !important;
-            bottom: auto !important;
-            min-width: auto !important;
-            max-width: 300px !important;
-          }
-        }
-        
-        /* Extra small screens */
-        @media (max-width: 480px) {
-          .container {
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-          }
-          nav h1, nav h2, nav h3, nav p, nav span {
-            font-size: max(0.875rem, 2.5vw) !important;
-          }
-        }
-      `}</style>
-    </nav>
+      {/* Spacer */}
+      <div style={{ height: '68px' }}/>
+    </>
   );
 }
 
-// NavLink Component
-function NavLink({ to, icon, label, active }: { to: string; icon: React.ReactNode; label: string; active: boolean }) {
+/* ── NavPill ── */
+function NavPill({ to, icon, label, active, scrolled, textCol, activeColor, activeBg }: {
+  to: string; icon: React.ReactNode; label: string;
+  active: boolean; scrolled: boolean;
+  textCol: string; activeColor: string; activeBg: string;
+}) {
   return (
-    <Link 
-      to={to} 
-      className="nav-link"
-      style={{
-        textDecoration: 'none',
-        color: active ? '#667eea' : '#374151',
-        fontSize: '0.875rem',
-        fontWeight: active ? 600 : 500,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.25rem',
-        padding: '0.5rem 0.75rem',
-        borderRadius: '0.375rem',
-        background: active ? '#eff6ff' : 'transparent',
-        transition: 'all 0.2s ease'
-      }}
-      onMouseEnter={(e) => {
+    <Link to={to} style={{
+      display: 'flex', alignItems: 'center', gap: '0.375rem',
+      padding: '0.45rem 0.875rem', borderRadius: '9999px',
+      textDecoration: 'none', fontSize: '0.875rem',
+      fontWeight: active ? 600 : 500,
+      color: active ? activeColor : textCol,
+      background: active ? activeBg : 'transparent',
+      transition: 'all 0.18s',
+    }}
+      onMouseEnter={e => {
         if (!active) {
-          e.currentTarget.style.background = '#f9fafb';
-          e.currentTarget.style.color = '#1f2937';
+          e.currentTarget.style.background = scrolled ? activeBg : 'rgba(255,255,255,0.12)';
+          e.currentTarget.style.color = scrolled ? activeColor : 'white';
         }
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={e => {
         if (!active) {
           e.currentTarget.style.background = 'transparent';
-          e.currentTarget.style.color = '#374151';
+          e.currentTarget.style.color = textCol;
         }
       }}
     >
-      {icon}
-      {label}
+      {icon}{label}
     </Link>
   );
 }
 
-// Dropdown Link Component
-function DropdownLink({ to, label, icon }: { to: string; label: string; icon?: React.ReactNode }) {
+/* ── DropdownItem ── */
+function DDItem({ to, icon, label, accent }: { to: string; icon: React.ReactNode; label: string; accent: string }) {
   return (
-    <Link 
-      to={to}
-      style={{
-        textDecoration: 'none',
-        padding: '0.625rem 0.75rem',
-        fontSize: '0.875rem',
-        color: '#374151',
-        display: 'flex',
-        alignItems: 'center',
-        gap: icon ? '0.5rem' : '0',
-        borderRadius: '0.375rem',
-        transition: 'background 0.2s ease'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = '#f9fafb';
-        e.currentTarget.style.color = '#667eea';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'white';
-        e.currentTarget.style.color = '#374151';
-      }}
+    <Link to={to} style={{
+      display: 'flex', alignItems: 'center', gap: '0.625rem',
+      padding: '0.6rem 0.875rem', borderRadius: '10px',
+      textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500, color: '#374151',
+      transition: 'all 0.15s',
+    }}
+      onMouseEnter={e => { e.currentTarget.style.background = `rgba(13,148,136,0.08)`; e.currentTarget.style.color = accent; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#374151'; }}
     >
-      {icon}
-      {label}
-    </Link>
-  );
-}
-
-// Mobile Nav Link Component
-function MobileNavLink({ to, label, icon }: { to: string; label: string; icon: React.ReactNode }) {
-  return (
-    <Link 
-      to={to}
-      onClick={(e) => {
-        // Close menu after navigation
-      }}
-      style={{
-        textDecoration: 'none',
-        color: '#374151',
-        padding: '0.75rem',
-        fontSize: '0.9375rem',
-        fontWeight: 500,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        borderRadius: '0.5rem',
-        transition: 'background 0.2s ease'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = '#f9fafb';
-        e.currentTarget.style.color = '#667eea';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent';
-        e.currentTarget.style.color = '#374151';
-      }}
-    >
-      {icon}
-      {label}
+      <span style={{ color: '#94a3b8' }}>{icon}</span>{label}
     </Link>
   );
 }
