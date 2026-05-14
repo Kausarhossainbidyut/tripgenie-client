@@ -18,7 +18,7 @@ export function EditUserModal({ user, onClose, onSave, loading }: EditUserModalP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave(user._id, formData);
+    await onSave(user._id!, formData);
   };
 
   return (

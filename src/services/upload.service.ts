@@ -158,7 +158,7 @@ export const uploadService = {
    * Deletes multiple images by their delete_urls
    */
   bulkDeleteImages: async (deleteUrls: string[]): Promise<UploadApiResponse[]> => {
-    const promises = deleteUrls.map(url => this.deleteImage(url));
+    const promises = deleteUrls.map(url => uploadService.deleteImage(url));
     return await Promise.all(promises);
   },
 };

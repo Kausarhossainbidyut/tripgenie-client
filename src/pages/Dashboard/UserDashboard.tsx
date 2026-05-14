@@ -25,7 +25,9 @@ export function UserDashboard() {
       // Fetch recent bookings
       const bookingsResponse = await bookingService.getAllBookings();
       if (bookingsResponse.success) {
-        setRecentBookings(bookingsResponse.data.slice(0, 5)); // Last 5 bookings
+        const data = bookingsResponse.data;
+        const bookingsArray = Array.isArray(data) ? data : data.bookings ?? [];
+        setRecentBookings(bookingsArray.slice(0, 5)); // Last 5 bookings
       }
 
       // Fetch wishlist count

@@ -33,31 +33,27 @@ export function FileUpload({
       if (multiple) {
         // Upload multiple files
         const filesArray = Array.from(files);
-        const response = await uploadService.uploadTravelImages(filesArray);
+        const uploadedFiles = await uploadService.uploadTravelImages(filesArray);
         
-        if (response.success) {
-          const urls = response.data.map(item => item.url);
-          setUploadedUrls(prev => [...prev, ...urls]);
-          if (onMultipleUpload) {
-            onMultipleUpload(response.data);
-          }
-          alert(`Successfully uploaded ${response.data.length} images!`);
+        const urls = uploadedFiles.map(item => item.url);
+        setUploadedUrls(prev => [...prev, ...urls]);
+        if (onMultipleUpload) {
+          onMultipleUpload(uploadedFiles);
         }
+        alert(`Successfully uploaded ${uploadedFiles.length} images!`);
       } else {
         // Upload single file
         const file = files[0];
-        const response = await uploadService.uploadProfileImage(file);
+        const uploadedFile = await uploadService.uploadProfileImage(file);
         
-        if (response.success) {
-          setPreview(response.data.url);
-          if (onUpload) {
-            onUpload(response.data);
-          }
-          alert('Image uploaded successfully!');
-          
-          // Show delete URL for reference
-          console.log('Delete URL:', response.data.delete_url);
+        setPreview(uploadedFile.url);
+        if (onUpload) {
+          onUpload(uploadedFile);
         }
+        alert('Image uploaded successfully!');
+        
+        // Show delete URL for reference
+        console.log('Delete URL:', uploadedFile.delete_url);
       }
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to upload image');

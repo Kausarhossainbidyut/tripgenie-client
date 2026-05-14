@@ -596,7 +596,8 @@ function BookingsSection() {
       setLoading(true);
       const response = await bookingService.getAllBookings();
       if (response.success) {
-        setBookings(response.data || []);
+        const data = response.data;
+        setBookings(Array.isArray(data) ? data : (data as any).bookings ?? []);
       }
     } catch (error: any) {
       console.error('Failed to fetch bookings:', error);

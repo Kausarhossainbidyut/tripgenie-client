@@ -31,7 +31,7 @@ export function EditItemModal({ item, onClose, onSave, loading }: EditItemModalP
       return;
     }
 
-    await onSave(item._id, formData);
+    await onSave(item._id!, formData);
   };
 
   return (
