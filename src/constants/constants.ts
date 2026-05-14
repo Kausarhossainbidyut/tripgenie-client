@@ -20,5 +20,5 @@ export const STORAGE_KEYS = {
   USER: 'user',
 } as const;
 
-export const API_URL = 'http://localhost:5000/api';
-// export const API_URL = 'https://tripgenie-backend-zq89.vercel.app/api';
+// export const API_URL = 'http://localhost:5000/api';
+export const API_URL = 'https://tripgenie-backend-zq89-5ctmzgqq4.vercel.app/api';
