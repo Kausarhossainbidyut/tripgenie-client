@@ -239,6 +239,7 @@ export function ItemDetail() {
 
   const handleUpdateItem = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!item) return;
     try {
       setUpdateLoading(true);
       const response = await itemService.updateItem(itemId!, item);
