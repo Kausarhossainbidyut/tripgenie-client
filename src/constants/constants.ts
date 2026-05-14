@@ -20,5 +20,8 @@ export const STORAGE_KEYS = {
   USER: 'user',
 } as const;
 
-// export const API_URL = 'http://localhost:5000/api';
-export const API_URL = 'https://tripgenie-backend-zq89-5ctmzgqq4.vercel.app/api';
+// In development, Vite proxies /api → live backend (no CORS issue)
+// In production build, use the full backend URL
+export const API_URL = import.meta.env.DEV
+  ? '/api'
+  : 'https://tripgenie-backend.vercel.app/api';
